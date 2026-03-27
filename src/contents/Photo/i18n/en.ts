@@ -1,0 +1,71 @@
+export default {
+  photo: {
+    title: 'Photo Management',
+    folder: {
+      select: 'Select Folder',
+      selectPlaceholder: 'Select a folder',
+      create: 'Create Folder',
+      createNew: 'Create New Folder',
+      namePlaceholder: 'Enter folder name',
+      tree: 'Folder Hierarchy',
+    },
+    download: {
+      fromUrl: 'Download Image from URL',
+      urlPlaceholder: 'Enter image URL',
+    },
+    actions: {
+      title: 'Actions',
+      camera: 'Capture from Camera',
+      library: 'Upload from Library',
+      deleteSelected: 'Delete ({count})',
+      create: 'Create',
+      cancel: 'Cancel',
+      download: 'Download',
+      search: 'Search',
+      reset: 'Reset',
+      retry: 'Retry',
+      delete: 'Delete',
+    },
+    view: {
+      mode: 'View Mode',
+    },
+    images: {
+      inFolder: 'Images in "{folderName}"',
+    },
+    search: {
+      title: 'Search Images',
+      placeholder: 'Enter image name',
+    },
+    empty: {
+      noImages: 'No images found in this folder',
+    },
+    error: {
+      title: 'Error',
+      init: 'Failed to initialize photo management',
+      loadFolders: 'Failed to load folders',
+      loadImages: 'Failed to load images',
+      folderNameRequired: 'Folder name is required',
+      createFolder: 'Failed to create folder',
+      selectFolderFirst: 'Please select a folder first',
+      urlRequired: 'Image URL is required',
+      uploadImage: 'Failed to upload image',
+      downloadImage: 'Failed to download image',
+      deleteImages: 'Failed to delete images',
+      searchImages: 'Failed to search images',
+      moveImage: 'Failed to move image',
+      regenerateThumbnails: 'Failed to regenerate thumbnails',
+    },
+    success: {
+      title: 'Success',
+      folderCreated: 'Folder created successfully',
+      imageDownloaded: 'Image downloaded successfully',
+      imagesDeleted: 'Images deleted successfully',
+      imageMoved: 'Image moved successfully',
+      thumbnailsRegenerated: 'Thumbnails regenerated successfully',
+    },
+    confirm: {
+      title: 'Confirm',
+      deleteImages: 'Delete {count} image(s)?',
+    },
+  },
+};

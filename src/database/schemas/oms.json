@@ -1,0 +1,477 @@
+{
+    "version": "v1",
+    "database_name": "oms.db",
+    "description": "Xử lý đơn hàng từ nhiều kênh (tại cửa hàng, online), quản lý trạng thái và quy trình xử lý đơn hàng.",
+    "type_mapping": {
+        "sqlite": {
+            "string": "TEXT",
+            "varchar": "TEXT",
+            "char": "TEXT",
+            "email": "TEXT",
+            "url": "TEXT",
+            "uuid": "TEXT",
+            "integer": "INTEGER",
+            "bigint": "INTEGER",
+            "smallint": "INTEGER",
+            "tinyint": "INTEGER",
+            "decimal": "REAL",
+            "numeric": "REAL",
+            "float": "REAL",
+            "double": "REAL",
+            "boolean": "INTEGER",
+            "timestamp": "TEXT",
+            "datetime": "TEXT",
+            "date": "TEXT",
+            "time": "TEXT",
+            "json": "TEXT",
+            "array": "TEXT",
+            "blob": "BLOB",
+            "binary": "BLOB"
+        }
+    },
+    "schemas": {
+        "orders": {
+            "description": "Quản lý thông tin đơn hàng từ nhiều kênh.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "constraints": "PRIMARY KEY",
+                    "description": "Định danh duy nhất của đơn hàng."
+                },
+                {
+                    "name": "user_id",
+                    "type": "integer",
+                    "description": "Định danh người dùng tạo đơn hàng."
+                },
+                {
+                    "name": "customer_id",
+                    "type": "integer",
+                    "description": "Định danh khách hàng đặt đơn hàng."
+                },
+                {
+                    "name": "table_id",
+                    "type": "integer",
+                    "description": "Định danh bàn ăn liên quan đến đơn hàng."
+                },
+                {
+                    "name": "booking_id",
+                    "type": "uuid",
+                    "description": "Định danh đặt chỗ liên quan đến đơn hàng."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh cửa hàng xử lý đơn hàng."
+                },
+                {
+                    "name": "order_number",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL UNIQUE",
+                    "description": "Số đơn hàng."
+                },
+                {
+                    "name": "subtotal",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "NOT NULL",
+                    "description": "Tổng giá trị trước thuế và giảm giá."
+                },
+                {
+                    "name": "tax_amount",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "DEFAULT 0",
+                    "description": "Số tiền thuế của đơn hàng."
+                },
+                {
+                    "name": "discount_amount",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "DEFAULT 0",
+                    "description": "Số tiền giảm giá của đơn hàng."
+                },
+                {
+                    "name": "total",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "NOT NULL",
+                    "description": "Tổng giá trị cuối cùng của đơn hàng."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL DEFAULT 'pending'",
+                    "enum": ["pending", "confirmed", "preparing", "completed", "canceled"],
+                    "description": "Trạng thái của đơn hàng."
+                },
+                {
+                    "name": "order_type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL DEFAULT 'dine_in'",
+                    "enum": ["dine_in", "takeaway", "delivery"],
+                    "description": "Loại đơn hàng (ví dụ: tại chỗ, mang đi)."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo đơn hàng."
+                },
+                {
+                    "name": "promotion_id",
+                    "type": "integer",
+                    "description": "Định danh chương trình khuyến mãi áp dụng."
+                },
+                {
+                    "name": "online_order_id",
+                    "type": "uuid",
+                    "description": "Định danh đơn hàng online liên quan."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_orders_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_orders_order_number",
+                    "columns": ["order_number"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo số đơn hàng là duy nhất."
+                },
+                {
+                    "name": "idx_orders_customer_id",
+                    "columns": ["customer_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo customer_id."
+                }
+            ],
+            "foreign_keys": []
+        },
+        "order_items": {
+            "description": "Chi tiết các mặt hàng trong đơn hàng.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Định danh duy nhất của mục trong đơn hàng."
+                },
+                {
+                    "name": "order_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh đơn hàng liên quan."
+                },
+                {
+                    "name": "product_id",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh sản phẩm trong mục đơn hàng."
+                },
+                {
+                    "name": "variant_id",
+                    "type": "integer",
+                    "description": "Định danh biến thể sản phẩm trong mục đơn hàng."
+                },
+                {
+                    "name": "quantity",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Số lượng sản phẩm trong mục đơn hàng."
+                },
+                {
+                    "name": "unit_price",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "NOT NULL",
+                    "description": "Đơn giá của sản phẩm."
+                },
+                {
+                    "name": "total_price",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "NOT NULL",
+                    "description": "Tổng giá trị của mục đơn hàng."
+                },
+                {
+                    "name": "notes",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Ghi chú của mục đơn hàng."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "DEFAULT 'pending'",
+                    "enum": ["pending", "preparing", "served", "canceled"],
+                    "description": "Trạng thái của mục đơn hàng."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo mục đơn hàng."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_order_items_order_id",
+                    "columns": ["order_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo order_id."
+                },
+                {
+                    "name": "idx_order_items_product_id",
+                    "columns": ["product_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo product_id."
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_order_items_order_id",
+                    "column": "order_id",
+                    "references": {
+                        "table": "orders",
+                        "column": "id"
+                    },
+                    "on_delete": "CASCADE",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng orders."
+                }
+            ]
+        },
+        "transactions": {
+            "description": "Quản lý các giao dịch thanh toán liên quan đến đơn hàng.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "constraints": "PRIMARY KEY",
+                    "description": "Định danh duy nhất của giao dịch."
+                },
+                {
+                    "name": "order_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh đơn hàng liên quan đến giao dịch."
+                },
+                {
+                    "name": "booking_id",
+                    "type": "uuid",
+                    "description": "Định danh đặt chỗ liên quan đến giao dịch."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh cửa hàng xử lý giao dịch."
+                },
+                {
+                    "name": "transaction_number",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL UNIQUE",
+                    "description": "Số giao dịch."
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "NOT NULL",
+                    "description": "Số tiền giao dịch."
+                },
+                {
+                    "name": "payment_method",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "enum": ["credit_card", "bank_transfer", "mobile_payment", "cash"],
+                    "description": "Phương thức thanh toán của giao dịch."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL DEFAULT 'pending'",
+                    "enum": ["pending", "completed", "failed", "refunded"],
+                    "description": "Trạng thái của giao dịch."
+                },
+                {
+                    "name": "reference_id",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Mã tham chiếu của giao dịch."
+                },
+                {
+                    "name": "payment_transaction_id",
+                    "type": "uuid",
+                    "description": "Định danh giao dịch thanh toán liên quan."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo giao dịch."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_transactions_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_transactions_order_id",
+                    "columns": ["order_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo order_id."
+                },
+                {
+                    "name": "idx_transactions_transaction_number",
+                    "columns": ["transaction_number"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo số giao dịch là duy nhất."
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_transactions_order_id",
+                    "column": "order_id",
+                    "references": {
+                        "table": "orders",
+                        "column": "id"
+                    },
+                    "on_delete": "CASCADE",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng orders."
+                }
+            ]
+        },
+        "online_orders": {
+            "description": "Quản lý thông tin đơn hàng online và giao hàng.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "constraints": "PRIMARY KEY",
+                    "description": "Định danh duy nhất của đơn hàng online."
+                },
+                {
+                    "name": "order_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh đơn hàng liên quan."
+                },
+                {
+                    "name": "customer_id",
+                    "type": "integer",
+                    "description": "Định danh khách hàng đặt đơn hàng online."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh cửa hàng xử lý đơn hàng."
+                },
+                {
+                    "name": "delivery_address",
+                    "type": "varchar",
+                    "length": 255,
+                    "constraints": "NOT NULL",
+                    "description": "Địa chỉ giao hàng."
+                },
+                {
+                    "name": "delivery_service",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "description": "Dịch vụ vận chuyển được sử dụng."
+                },
+                {
+                    "name": "delivery_fee",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "DEFAULT 0",
+                    "description": "Phí giao hàng."
+                },
+                {
+                    "name": "estimated_delivery_time",
+                    "type": "datetime",
+                    "description": "Thời gian giao hàng dự kiến."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL DEFAULT 'pending'",
+                    "enum": ["pending", "confirmed", "shipped", "delivered", "canceled"],
+                    "description": "Trạng thái của đơn hàng online."
+                },
+                {
+                    "name": "tracking_id",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Mã theo dõi giao hàng."
+                },
+                {
+                    "name": "special_instructions",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Hướng dẫn đặc biệt cho giao hàng."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo đơn hàng online."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_online_orders_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_online_orders_order_id",
+                    "columns": ["order_id"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo mỗi đơn hàng online chỉ liên kết với một đơn hàng."
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_online_orders_order_id",
+                    "column": "order_id",
+                    "references": {
+                        "table": "orders",
+                        "column": "id"
+                    },
+                    "on_delete": "CASCADE",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng orders."
+                }
+            ]
+        }
+    }
+}

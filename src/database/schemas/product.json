@@ -1,0 +1,708 @@
+{
+  "version": "v1",
+  "database_name": "product.db",
+  "description": "Hệ thống quản lý danh mục sản phẩm, hỗ trợ quản lý danh mục, sản phẩm, biến thể, thuộc tính, hình ảnh và đánh giá sản phẩm. Dùng để quản lý thông tin sản phẩm mà không liên quan đến tồn kho.",
+  "type_mapping": {
+    "sqlite": {
+      "string": "TEXT",
+      "varchar": "TEXT",
+      "char": "TEXT",
+      "email": "TEXT",
+      "url": "TEXT",
+      "uuid": "TEXT",
+      "integer": "INTEGER",
+      "bigint": "INTEGER",
+      "smallint": "INTEGER",
+      "tinyint": "INTEGER",
+      "decimal": "REAL",
+      "numeric": "REAL",
+      "float": "REAL",
+      "double": "REAL",
+      "boolean": "INTEGER",
+      "timestamp": "TEXT",
+      "datetime": "TEXT",
+      "date": "TEXT",
+      "time": "TEXT",
+      "json": "TEXT",
+      "array": "TEXT",
+      "blob": "BLOB",
+      "binary": "BLOB"
+    }
+  },
+  "schemas": {
+    "categories": {
+      "description": "Bảng lưu trữ thông tin các danh mục sản phẩm, hỗ trợ phân cấp và tùy chỉnh giao diện.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho danh mục."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "name",
+          "type": "varchar",
+          "length": 255,
+          "constraints": "NOT NULL",
+          "description": "Tên của danh mục sản phẩm."
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "description": "Mô tả chi tiết về danh mục."
+        },
+        {
+          "name": "parent_id",
+          "type": "integer",
+          "description": "Mã định danh của danh mục cha, dùng để tạo cấu trúc phân cấp."
+        },
+        {
+          "name": "level",
+          "type": "integer",
+          "constraints": "DEFAULT 1",
+          "description": "Cấp độ của danh mục trong cấu trúc phân cấp."
+        },
+        {
+          "name": "sort_order",
+          "type": "integer",
+          "constraints": "DEFAULT 0",
+          "description": "Thứ tự sắp xếp của danh mục."
+        },
+        {
+          "name": "image_url",
+          "type": "url",
+          "description": "Đường dẫn URL của hình ảnh đại diện danh mục."
+        },
+        {
+          "name": "icon",
+          "type": "varchar",
+          "length": 50,
+          "description": "Tên hoặc mã của biểu tượng đại diện danh mục."
+        },
+        {
+          "name": "color",
+          "type": "varchar",
+          "length": 7,
+          "description": "Mã màu sắc dùng để tùy chỉnh giao diện danh mục."
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "constraints": "DEFAULT TRUE",
+          "description": "Trạng thái hoạt động của danh mục."
+        },
+        {
+          "name": "metadata",
+          "type": "json",
+          "description": "Dữ liệu bổ sung dạng JSON để lưu thông tin tùy chỉnh."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo danh mục."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+          "description": "Thời gian cập nhật gần nhất của danh mục."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_categories_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        },
+        {
+          "name": "idx_categories_parent_id",
+          "columns": ["parent_id"],
+          "unique": false,
+          "description": "Chỉ mục trên parent_id để hỗ trợ truy vấn danh mục phân cấp."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_categories_parent_id",
+          "column": "parent_id",
+          "references": {
+            "table": "categories",
+            "column": "id"
+          },
+          "on_delete": "SET NULL",
+          "on_update": "CASCADE",
+          "description": "Liên kết đến danh mục cha để tạo cấu trúc phân cấp."
+        }
+      ]
+    },
+    "products": {
+      "description": "Bảng lưu trữ thông tin chi tiết của các sản phẩm, hỗ trợ các thuộc tính và tùy chỉnh SEO.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho sản phẩm."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "category_id",
+          "type": "integer",
+          "description": "Mã định danh của danh mục mà sản phẩm thuộc về."
+        },
+        {
+          "name": "name",
+          "type": "varchar",
+          "length": 255,
+          "constraints": "NOT NULL",
+          "description": "Tên của sản phẩm."
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "description": "Mô tả chi tiết về sản phẩm."
+        },
+        {
+          "name": "short_description",
+          "type": "varchar",
+          "length": 500,
+          "description": "Mô tả ngắn gọn của sản phẩm."
+        },
+        {
+          "name": "sku",
+          "type": "varchar",
+          "length": 100,
+          "constraints": "NOT NULL UNIQUE",
+          "description": "Mã SKU duy nhất của sản phẩm."
+        },
+        {
+          "name": "barcode",
+          "type": "varchar",
+          "length": 100,
+          "description": "Mã vạch của sản phẩm."
+        },
+        {
+          "name": "qr_code",
+          "type": "varchar",
+          "length": 255,
+          "description": "Mã QR của sản phẩm."
+        },
+        {
+          "name": "price",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "constraints": "NOT NULL",
+          "description": "Giá bán của sản phẩm."
+        },
+        {
+          "name": "cost_price",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Giá vốn của sản phẩm."
+        },
+        {
+          "name": "compare_price",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Giá so sánh để hiển thị ưu đãi."
+        },
+        {
+          "name": "unit",
+          "type": "varchar",
+          "length": 50,
+          "description": "Đơn vị tính của sản phẩm (ví dụ: cái, hộp)."
+        },
+        {
+          "name": "weight",
+          "type": "decimal",
+          "precision": 10,
+          "scale": 2,
+          "description": "Trọng lượng của sản phẩm."
+        },
+        {
+          "name": "dimensions",
+          "type": "json",
+          "description": "Kích thước của sản phẩm (dạng JSON)."
+        },
+        {
+          "name": "image_urls",
+          "type": "json",
+          "description": "Danh sách URL hình ảnh của sản phẩm (dạng JSON)."
+        },
+        {
+          "name": "tags",
+          "type": "json",
+          "description": "Thẻ gắn cho sản phẩm (dạng JSON)."
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "constraints": "DEFAULT TRUE",
+          "description": "Trạng thái hoạt động của sản phẩm."
+        },
+        {
+          "name": "is_featured",
+          "type": "boolean",
+          "constraints": "DEFAULT FALSE",
+          "description": "Trạng thái nổi bật của sản phẩm."
+        },
+        {
+          "name": "tax_class",
+          "type": "varchar",
+          "length": 50,
+          "description": "Loại thuế áp dụng cho sản phẩm."
+        },
+        {
+          "name": "attributes",
+          "type": "json",
+          "description": "Thuộc tính bổ sung của sản phẩm (dạng JSON)."
+        },
+        {
+          "name": "seo_title",
+          "type": "varchar",
+          "length": 255,
+          "description": "Tiêu đề SEO của sản phẩm."
+        },
+        {
+          "name": "seo_description",
+          "type": "string",
+          "description": "Mô tả SEO của sản phẩm."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo sản phẩm."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+          "description": "Thời gian cập nhật gần nhất của sản phẩm."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_products_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        },
+        {
+          "name": "idx_products_category_id",
+          "columns": ["category_id"],
+          "unique": false,
+          "description": "Chỉ mục trên category_id để hỗ trợ truy vấn theo danh mục."
+        },
+        {
+          "name": "idx_products_sku",
+          "columns": ["sku"],
+          "unique": true,
+          "description": "Chỉ mục trên sku để đảm bảo tính duy nhất và truy vấn nhanh."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_products_category_id",
+          "column": "category_id",
+          "references": {
+            "table": "categories",
+            "column": "id"
+          },
+          "on_delete": "SET NULL",
+          "on_update": "CASCADE",
+          "description": "Liên kết sản phẩm với danh mục."
+        }
+      ]
+    },
+    "product_variants": {
+      "description": "Bảng lưu trữ thông tin các biến thể của sản phẩm, hỗ trợ tùy chỉnh giá và thuộc tính.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho biến thể."
+        },
+        {
+          "name": "product_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của sản phẩm mà biến thể thuộc về."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "name",
+          "type": "varchar",
+          "length": 255,
+          "constraints": "NOT NULL",
+          "description": "Tên của biến thể."
+        },
+        {
+          "name": "sku",
+          "type": "varchar",
+          "length": 100,
+          "constraints": "NOT NULL UNIQUE",
+          "description": "Mã SKU duy nhất của biến thể."
+        },
+        {
+          "name": "barcode",
+          "type": "varchar",
+          "length": 100,
+          "description": "Mã vạch của biến thể."
+        },
+        {
+          "name": "price",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "constraints": "NOT NULL",
+          "description": "Giá bán của biến thể."
+        },
+        {
+          "name": "cost_price",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Giá vốn của biến thể."
+        },
+        {
+          "name": "compare_price",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Giá so sánh của biến thể."
+        },
+        {
+          "name": "weight",
+          "type": "decimal",
+          "precision": 10,
+          "scale": 2,
+          "description": "Trọng lượng của biến thể."
+        },
+        {
+          "name": "image_url",
+          "type": "url",
+          "description": "Đường dẫn URL của hình ảnh biến thể."
+        },
+        {
+          "name": "variant_attributes",
+          "type": "json",
+          "description": "Thuộc tính của biến thể (dạng JSON)."
+        },
+        {
+          "name": "position",
+          "type": "integer",
+          "constraints": "DEFAULT 0",
+          "description": "Vị trí sắp xếp của biến thể."
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "constraints": "DEFAULT TRUE",
+          "description": "Trạng thái hoạt động của biến thể."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo biến thể."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+          "description": "Thời gian cập nhật gần nhất của biến thể."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_variants_product_id",
+          "columns": ["product_id"],
+          "unique": false,
+          "description": "Chỉ mục trên product_id để tối ưu hóa truy vấn biến thể theo sản phẩm."
+        },
+        {
+          "name": "idx_variants_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        },
+        {
+          "name": "idx_variants_sku",
+          "columns": ["sku"],
+          "unique": true,
+          "description": "Chỉ mục trên sku để đảm bảo tính duy nhất và truy vấn nhanh."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_variants_product_id",
+          "column": "product_id",
+          "references": {
+            "table": "products",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết biến thể với sản phẩm."
+        }
+      ]
+    },
+    "product_attributes": {
+      "description": "Bảng lưu trữ các thuộc tính tùy chỉnh của sản phẩm, hỗ trợ tạo biến thể.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho thuộc tính."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "name",
+          "type": "varchar",
+          "length": 255,
+          "constraints": "NOT NULL",
+          "description": "Tên của thuộc tính."
+        },
+        {
+          "name": "is_required",
+          "type": "boolean",
+          "constraints": "DEFAULT FALSE",
+          "description": "Trạng thái bắt buộc của thuộc tính."
+        },
+        {
+          "name": "is_variation",
+          "type": "boolean",
+          "constraints": "DEFAULT FALSE",
+          "description": "Trạng thái dùng để tạo biến thể."
+        },
+        {
+          "name": "sort_order",
+          "type": "integer",
+          "constraints": "DEFAULT 0",
+          "description": "Thứ tự sắp xếp của thuộc tính."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo thuộc tính."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_attributes_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        }
+      ],
+      "foreign_keys": []
+    },
+    "product_images": {
+      "description": "Bảng lưu trữ các hình ảnh liên quan đến sản phẩm, hỗ trợ quản lý đa hình ảnh.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho hình ảnh."
+        },
+        {
+          "name": "product_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của sản phẩm mà hình ảnh thuộc về."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "url",
+          "type": "url",
+          "constraints": "NOT NULL",
+          "description": "Đường dẫn URL của hình ảnh."
+        },
+        {
+          "name": "alt_text",
+          "type": "varchar",
+          "length": 255,
+          "description": "Văn bản thay thế cho hình ảnh."
+        },
+        {
+          "name": "sort_order",
+          "type": "integer",
+          "constraints": "DEFAULT 0",
+          "description": "Thứ tự sắp xếp của hình ảnh."
+        },
+        {
+          "name": "is_primary",
+          "type": "boolean",
+          "constraints": "DEFAULT FALSE",
+          "description": "Trạng thái hình ảnh chính."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo hình ảnh."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_images_product_id",
+          "columns": ["product_id"],
+          "unique": false,
+          "description": "Chỉ mục trên product_id để tối ưu hóa truy vấn hình ảnh theo sản phẩm."
+        },
+        {
+          "name": "idx_images_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_images_product_id",
+          "column": "product_id",
+          "references": {
+            "table": "products",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết hình ảnh với sản phẩm."
+        }
+      ]
+    },
+    "product_reviews": {
+      "description": "Bảng lưu trữ đánh giá của khách hàng về sản phẩm.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho đánh giá."
+        },
+        {
+          "name": "product_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của sản phẩm được đánh giá."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "customer_name",
+          "type": "varchar",
+          "length": 255,
+          "constraints": "NOT NULL",
+          "description": "Tên của khách hàng đánh giá."
+        },
+        {
+          "name": "customer_email",
+          "type": "email",
+          "description": "Email của khách hàng đánh giá."
+        },
+        {
+          "name": "rating",
+          "type": "integer",
+          "constraints": "NOT NULL CHECK (rating >= 1 AND rating <= 5)",
+          "description": "Điểm đánh giá (thang 1-5)."
+        },
+        {
+          "name": "title",
+          "type": "varchar",
+          "length": 255,
+          "description": "Tiêu đề của đánh giá."
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "description": "Nội dung chi tiết của đánh giá."
+        },
+        {
+          "name": "is_verified",
+          "type": "boolean",
+          "constraints": "DEFAULT FALSE",
+          "description": "Trạng thái xác minh đánh giá."
+        },
+        {
+          "name": "is_approved",
+          "type": "boolean",
+          "constraints": "DEFAULT FALSE",
+          "description": "Trạng thái phê duyệt đánh giá."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo đánh giá."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_reviews_product_id",
+          "columns": ["product_id"],
+          "unique": false,
+          "description": "Chỉ mục trên product_id để tối ưu hóa truy vấn đánh giá theo sản phẩm."
+        },
+        {
+          "name": "idx_reviews_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_reviews_product_id",
+          "column": "product_id",
+          "references": {
+            "table": "products",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết đánh giá với sản phẩm."
+        }
+      ]
+    }
+  }
+}

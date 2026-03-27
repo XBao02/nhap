@@ -1,0 +1,198 @@
+{
+    "version": "v1",
+    "database_name": "fnb.db",
+    "description": "Module chuyên dụng cho ngành F&B, quản lý sơ đồ bàn và thông tin đặt chỗ của khách hàng.",
+    "type_mapping": {
+        "sqlite": {
+            "string": "TEXT",
+            "varchar": "TEXT",
+            "char": "TEXT",
+            "email": "TEXT",
+            "url": "TEXT",
+            "uuid": "TEXT",
+            "integer": "INTEGER",
+            "bigint": "INTEGER",
+            "smallint": "INTEGER",
+            "tinyint": "INTEGER",
+            "decimal": "REAL",
+            "numeric": "REAL",
+            "float": "REAL",
+            "double": "REAL",
+            "boolean": "INTEGER",
+            "timestamp": "TEXT",
+            "datetime": "TEXT",
+            "date": "TEXT",
+            "time": "TEXT",
+            "json": "TEXT",
+            "array": "TEXT",
+            "blob": "BLOB",
+            "binary": "BLOB"
+        }
+    },
+    "schemas": {
+        "tables": {
+            "description": "Quản lý thông tin về các bàn ăn trong nhà hàng.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Định danh duy nhất của bàn ăn."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh cửa hàng sở hữu bàn ăn."
+                },
+                {
+                    "name": "name",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "description": "Tên hoặc mã số của bàn ăn."
+                },
+                {
+                    "name": "capacity",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Sức chứa của bàn ăn."
+                },
+                {
+                    "name": "location",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Vị trí của bàn ăn trong nhà hàng."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "DEFAULT 'available'",
+                    "enum": ["available", "occupied", "reserved", "maintenance"],
+                    "description": "Trạng thái của bàn ăn (ví dụ: có sẵn, đang sử dụng)."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo thông tin bàn ăn."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_tables_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_tables_name_store_id",
+                    "columns": ["name", "store_id"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo tên bàn ăn là duy nhất trong cửa hàng."
+                }
+            ],
+            "foreign_keys": []
+        },
+        "bookings": {
+            "description": "Quản lý thông tin đặt chỗ của khách hàng.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "constraints": "PRIMARY KEY",
+                    "description": "Định danh duy nhất của đặt chỗ."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh cửa hàng liên quan đến đặt chỗ."
+                },
+                {
+                    "name": "customer_id",
+                    "type": "integer",
+                    "description": "Định danh khách hàng đặt chỗ."
+                },
+                {
+                    "name": "table_id",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh bàn ăn được đặt."
+                },
+                {
+                    "name": "guest_count",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Số lượng khách trong đặt chỗ."
+                },
+                {
+                    "name": "booking_date",
+                    "type": "date",
+                    "constraints": "NOT NULL",
+                    "description": "Ngày đặt chỗ."
+                },
+                {
+                    "name": "booking_time",
+                    "type": "time",
+                    "constraints": "NOT NULL",
+                    "description": "Thời gian đặt chỗ."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL DEFAULT 'confirmed'",
+                    "enum": ["confirmed", "pending", "cancelled", "completed"],
+                    "description": "Trạng thái của đặt chỗ."
+                },
+                {
+                    "name": "special_requests",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Yêu cầu đặc biệt của khách hàng."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo đặt chỗ."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_bookings_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_bookings_table_id",
+                    "columns": ["table_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo table_id."
+                },
+                {
+                    "name": "idx_bookings_booking_date",
+                    "columns": ["booking_date"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo ngày đặt chỗ."
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_bookings_table_id",
+                    "column": "table_id",
+                    "references": {
+                        "table": "tables",
+                        "column": "id"
+                    },
+                    "on_delete": "RESTRICT",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng tables."
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,40 @@
+export type RootStackParamList = {
+  Home: undefined;
+  AppInitializationScreen: undefined;
+  Database: undefined;
+  Login: undefined;
+  Settings: { userId?: string | null };
+  EnterpriseInfo: undefined;
+  DatabaseSetup: undefined;
+  Setup: undefined;
+  Main: { userInfo: any | null };
+  Dashboard: {
+    roles: string[];
+    fields: string[];
+  };
+  Example: undefined;
+  TreeMenu: undefined;
+  FlatMenu: undefined;
+  SalesPointsScreen: undefined;
+  SalesScreen: undefined;
+  Payment: undefined;
+  Accounting: undefined;
+  Retail: undefined;
+  Hospitality: undefined;
+  Accommodation: undefined;
+  FNB: undefined;
+  OnlineOrder: undefined;
+  AdminPaymentConfig: undefined;
+  Billing: undefined;
+  DatabaseManager: undefined;
+  // Các màn hình chỉ demo làm cấu trúc menu con
+  EmployeeList: undefined;
+  AddEmployee: undefined;
+  Attendance: undefined;
+  FinancialReports: undefined;
+  IncomeExpense: undefined;
+  ProductList: undefined;
+  StockManagement: undefined;
+  SalesReport: undefined;
+  PerformanceReport: undefined;
+};

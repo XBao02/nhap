@@ -1,0 +1,911 @@
+{
+  "version": "v1",
+  "database_name": "inventory.db",
+  "description": "Hệ thống quản lý tồn kho sản phẩm, hỗ trợ theo dõi nhập xuất tồn, kiểm kê, điều chỉnh tồn kho và cảnh báo hết kho.",
+  "type_mapping": {
+    "sqlite": {
+      "string": "TEXT",
+      "varchar": "TEXT",
+      "char": "TEXT",
+      "email": "TEXT",
+      "url": "TEXT",
+      "uuid": "TEXT",
+      "integer": "INTEGER",
+      "bigint": "INTEGER",
+      "smallint": "INTEGER",
+      "tinyint": "INTEGER",
+      "decimal": "REAL",
+      "numeric": "REAL",
+      "float": "REAL",
+      "double": "REAL",
+      "boolean": "INTEGER",
+      "timestamp": "TEXT",
+      "datetime": "TEXT",
+      "date": "TEXT",
+      "time": "TEXT",
+      "json": "TEXT",
+      "array": "TEXT",
+      "blob": "BLOB",
+      "binary": "BLOB"
+    }
+  },
+  "schemas": {
+    "products": {
+      "description": "Bảng lưu trữ thông tin cơ bản của sản phẩm, dùng để liên kết với dữ liệu tồn kho.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho sản phẩm."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "sku",
+          "type": "varchar",
+          "length": 100,
+          "constraints": "NOT NULL UNIQUE",
+          "description": "Mã SKU duy nhất của sản phẩm."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_products_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        },
+        {
+          "name": "idx_products_sku",
+          "columns": ["sku"],
+          "unique": true,
+          "description": "Chỉ mục trên sku để đảm bảo tính duy nhất và truy vấn nhanh."
+        }
+      ],
+      "foreign_keys": []
+    },
+    "product_variants": {
+      "description": "Bảng lưu trữ thông tin cơ bản của biến thể sản phẩm, dùng để liên kết với dữ liệu tồn kho.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho biến thể."
+        },
+        {
+          "name": "product_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của sản phẩm mà biến thể thuộc về."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "sku",
+          "type": "varchar",
+          "length": 100,
+          "constraints": "NOT NULL UNIQUE",
+          "description": "Mã SKU duy nhất của biến thể."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_variants_product_id",
+          "columns": ["product_id"],
+          "unique": false,
+          "description": "Chỉ mục trên product_id để tối ưu hóa truy vấn biến thể theo sản phẩm."
+        },
+        {
+          "name": "idx_variants_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        },
+        {
+          "name": "idx_variants_sku",
+          "columns": ["sku"],
+          "unique": true,
+          "description": "Chỉ mục trên sku để đảm bảo tính duy nhất và truy vấn nhanh."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_variants_product_id",
+          "column": "product_id",
+          "references": {
+            "table": "products",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết biến thể với sản phẩm."
+        }
+      ]
+    },
+    "inventory": {
+      "description": "Bảng lưu trữ thông tin tồn kho của sản phẩm, hỗ trợ quản lý chi tiết tồn kho.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho bản ghi tồn kho."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "product_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của sản phẩm trong tồn kho."
+        },
+        {
+          "name": "variant_id",
+          "type": "integer",
+          "description": "Mã định danh của biến thể trong tồn kho."
+        },
+        {
+          "name": "sku",
+          "type": "varchar",
+          "length": 100,
+          "constraints": "NOT NULL UNIQUE",
+          "description": "Mã SKU của sản phẩm hoặc biến thể."
+        },
+        {
+          "name": "quantity_on_hand",
+          "type": "integer",
+          "constraints": "NOT NULL DEFAULT 0",
+          "description": "Số lượng hiện có trong kho."
+        },
+        {
+          "name": "quantity_reserved",
+          "type": "integer",
+          "constraints": "NOT NULL DEFAULT 0",
+          "description": "Số lượng đã đặt trước."
+        },
+        {
+          "name": "quantity_available",
+          "type": "integer",
+          "constraints": "NOT NULL DEFAULT 0",
+          "description": "Số lượng có sẵn để bán."
+        },
+        {
+          "name": "reorder_level",
+          "type": "integer",
+          "constraints": "DEFAULT 0",
+          "description": "Mức tồn kho tối thiểu để đặt hàng lại."
+        },
+        {
+          "name": "max_stock_level",
+          "type": "integer",
+          "description": "Mức tồn kho tối đa cho phép."
+        },
+        {
+          "name": "location",
+          "type": "varchar",
+          "length": 100,
+          "description": "Vị trí lưu trữ trong kho."
+        },
+        {
+          "name": "bin_location",
+          "type": "varchar",
+          "length": 100,
+          "description": "Vị trí cụ thể trong kho (ví dụ: ngăn, kệ)."
+        },
+        {
+          "name": "unit_cost",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Đơn giá vốn của sản phẩm."
+        },
+        {
+          "name": "total_value",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Tổng giá trị tồn kho."
+        },
+        {
+          "name": "last_count_date",
+          "type": "date",
+          "description": "Ngày kiểm kê gần nhất."
+        },
+        {
+          "name": "last_movement_date",
+          "type": "date",
+          "description": "Ngày di chuyển gần nhất của tồn kho."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo bản ghi tồn kho."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+          "description": "Thời gian cập nhật gần nhất của tồn kho."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_inventory_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        },
+        {
+          "name": "idx_inventory_product_id",
+          "columns": ["product_id"],
+          "unique": false,
+          "description": "Chỉ mục trên product_id để tối ưu hóa truy vấn theo sản phẩm."
+        },
+        {
+          "name": "idx_inventory_variant_id",
+          "columns": ["variant_id"],
+          "unique": false,
+          "description": "Chỉ mục trên variant_id để tối ưu hóa truy vấn theo biến thể."
+        },
+        {
+          "name": "idx_inventory_sku",
+          "columns": ["sku"],
+          "unique": true,
+          "description": "Chỉ mục trên sku để đảm bảo tính duy nhất và truy vấn nhanh."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_inventory_product_id",
+          "column": "product_id",
+          "references": {
+            "table": "products",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết tồn kho với sản phẩm."
+        },
+        {
+          "name": "fk_inventory_variant_id",
+          "column": "variant_id",
+          "references": {
+            "table": "product_variants",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết tồn kho với biến thể."
+        }
+      ]
+    },
+    "inventory_movements": {
+      "description": "Bảng lưu trữ lịch sử di chuyển tồn kho, theo dõi nhập xuất kho.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho di chuyển tồn kho."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "inventory_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của bản ghi tồn kho."
+        },
+        {
+          "name": "reference_type",
+          "type": "varchar",
+          "length": 50,
+          "constraints": "NOT NULL",
+          "enum": ["order", "adjustment", "transfer", "return"],
+          "description": "Loại tham chiếu (ví dụ: order, adjustment)."
+        },
+        {
+          "name": "reference_id",
+          "type": "varchar",
+          "length": 100,
+          "description": "Mã định danh của tham chiếu."
+        },
+        {
+          "name": "movement_type",
+          "type": "varchar",
+          "length": 50,
+          "constraints": "NOT NULL",
+          "enum": ["in", "out", "adjustment"],
+          "description": "Loại di chuyển (nhập, xuất, điều chỉnh)."
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Số lượng di chuyển."
+        },
+        {
+          "name": "unit_cost",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Đơn giá của sản phẩm trong di chuyển."
+        },
+        {
+          "name": "total_cost",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Tổng chi phí của di chuyển."
+        },
+        {
+          "name": "reason",
+          "type": "varchar",
+          "length": 255,
+          "description": "Lý do di chuyển."
+        },
+        {
+          "name": "notes",
+          "type": "string",
+          "description": "Ghi chú bổ sung."
+        },
+        {
+          "name": "user_id",
+          "type": "integer",
+          "description": "Mã định danh của người thực hiện di chuyển."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo bản ghi di chuyển."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_movements_inventory_id",
+          "columns": ["inventory_id"],
+          "unique": false,
+          "description": "Chỉ mục trên inventory_id để tối ưu hóa truy vấn di chuyển."
+        },
+        {
+          "name": "idx_movements_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_movements_inventory_id",
+          "column": "inventory_id",
+          "references": {
+            "table": "inventory",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết di chuyển với bản ghi tồn kho."
+        }
+      ]
+    },
+    "stock_adjustments": {
+      "description": "Bảng lưu trữ thông tin điều chỉnh tồn kho, hỗ trợ kiểm kê và phê duyệt.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho điều chỉnh tồn kho."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "adjustment_number",
+          "type": "varchar",
+          "length": 100,
+          "constraints": "NOT NULL UNIQUE",
+          "description": "Số thứ tự của điều chỉnh."
+        },
+        {
+          "name": "reason",
+          "type": "varchar",
+          "length": 255,
+          "constraints": "NOT NULL",
+          "description": "Lý do điều chỉnh."
+        },
+        {
+          "name": "notes",
+          "type": "string",
+          "description": "Ghi chú bổ sung."
+        },
+        {
+          "name": "status",
+          "type": "varchar",
+          "length": 50,
+          "constraints": "NOT NULL DEFAULT 'pending'",
+          "enum": ["pending", "approved", "rejected"],
+          "description": "Trạng thái điều chỉnh."
+        },
+        {
+          "name": "user_id",
+          "type": "integer",
+          "description": "Mã định danh của người tạo điều chỉnh."
+        },
+        {
+          "name": "approved_by",
+          "type": "integer",
+          "description": "Mã định danh của người phê duyệt."
+        },
+        {
+          "name": "approved_at",
+          "type": "timestamp",
+          "description": "Thời gian phê duyệt."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo điều chỉnh."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+          "description": "Thời gian cập nhật gần nhất."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_adjustments_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        },
+        {
+          "name": "idx_adjustments_number",
+          "columns": ["adjustment_number"],
+          "unique": true,
+          "description": "Chỉ mục trên adjustment_number để đảm bảo tính duy nhất và truy vấn nhanh."
+        }
+      ],
+      "foreign_keys": []
+    },
+    "stock_adjustment_items": {
+      "description": "Bảng lưu trữ chi tiết các mục trong điều chỉnh tồn kho.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho mục điều chỉnh."
+        },
+        {
+          "name": "adjustment_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của điều chỉnh liên quan."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "inventory_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của bản ghi tồn kho."
+        },
+        {
+          "name": "expected_quantity",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Số lượng kỳ vọng."
+        },
+        {
+          "name": "actual_quantity",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Số lượng thực tế."
+        },
+        {
+          "name": "difference",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Sự khác biệt giữa kỳ vọng và thực tế."
+        },
+        {
+          "name": "unit_cost",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Đơn giá của sản phẩm."
+        },
+        {
+          "name": "total_cost_impact",
+          "type": "decimal",
+          "precision": 15,
+          "scale": 2,
+          "description": "Tổng ảnh hưởng chi phí."
+        },
+        {
+          "name": "reason",
+          "type": "varchar",
+          "length": 255,
+          "description": "Lý do điều chỉnh cho mục."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo mục điều chỉnh."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_adjustment_items_adjustment_id",
+          "columns": ["adjustment_id"],
+          "unique": false,
+          "description": "Chỉ mục trên adjustment_id để tối ưu hóa truy vấn mục điều chỉnh."
+        },
+        {
+          "name": "idx_adjustment_items_inventory_id",
+          "columns": ["inventory_id"],
+          "unique": false,
+          "description": "Chỉ mục trên inventory_id để tối ưu hóa truy vấn theo tồn kho."
+        },
+        {
+          "name": "idx_adjustment_items_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_adjustment_items_adjustment_id",
+          "column": "adjustment_id",
+          "references": {
+            "table": "stock_adjustments",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết mục điều chỉnh với điều chỉnh."
+        },
+        {
+          "name": "fk_adjustment_items_inventory_id",
+          "column": "inventory_id",
+          "references": {
+            "table": "inventory",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết mục điều chỉnh với tồn kho."
+        }
+      ]
+    },
+    "inventory_counts": {
+      "description": "Bảng lưu trữ thông tin kiểm kê tồn kho, hỗ trợ quản lý quy trình kiểm kê.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho kiểm kê."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "count_number",
+          "type": "varchar",
+          "length": 100,
+          "constraints": "NOT NULL UNIQUE",
+          "description": "Số thứ tự của kiểm kê."
+        },
+        {
+          "name": "count_type",
+          "type": "varchar",
+          "length": 50,
+          "constraints": "NOT NULL",
+          "enum": ["full", "partial"],
+          "description": "Loại kiểm kê (toàn bộ, từng phần)."
+        },
+        {
+          "name": "status",
+          "type": "varchar",
+          "length": 50,
+          "constraints": "NOT NULL DEFAULT 'in_progress'",
+          "enum": ["in_progress", "completed"],
+          "description": "Trạng thái kiểm kê."
+        },
+        {
+          "name": "location",
+          "type": "varchar",
+          "length": 100,
+          "description": "Vị trí kiểm kê."
+        },
+        {
+          "name": "notes",
+          "type": "string",
+          "description": "Ghi chú bổ sung."
+        },
+        {
+          "name": "started_by",
+          "type": "integer",
+          "description": "Mã định danh của người bắt đầu kiểm kê."
+        },
+        {
+          "name": "completed_by",
+          "type": "integer",
+          "description": "Mã định danh của người hoàn tất kiểm kê."
+        },
+        {
+          "name": "started_at",
+          "type": "timestamp",
+          "description": "Thời gian bắt đầu kiểm kê."
+        },
+        {
+          "name": "completed_at",
+          "type": "timestamp",
+          "description": "Thời gian hoàn tất kiểm kê."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo bản ghi kiểm kê."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_counts_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        },
+        {
+          "name": "idx_counts_number",
+          "columns": ["count_number"],
+          "unique": true,
+          "description": "Chỉ mục trên count_number để đảm bảo tính duy nhất và truy vấn nhanh."
+        }
+      ],
+      "foreign_keys": []
+    },
+    "inventory_count_items": {
+      "description": "Bảng lưu trữ chi tiết các mục trong quá trình kiểm kê tồn kho.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho mục kiểm kê."
+        },
+        {
+          "name": "count_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của kiểm kê liên quan."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "inventory_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của bản ghi tồn kho."
+        },
+        {
+          "name": "expected_quantity",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Số lượng kỳ vọng."
+        },
+        {
+          "name": "counted_quantity",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Số lượng đã kiểm."
+        },
+        {
+          "name": "difference",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Sự khác biệt giữa kỳ vọng và thực tế."
+        },
+        {
+          "name": "notes",
+          "type": "string",
+          "description": "Ghi chú bổ sung."
+        },
+        {
+          "name": "counted_by",
+          "type": "integer",
+          "description": "Mã định danh của người kiểm."
+        },
+        {
+          "name": "counted_at",
+          "type": "timestamp",
+          "description": "Thời gian kiểm."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo bản ghi mục kiểm kê."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_count_items_count_id",
+          "columns": ["count_id"],
+          "unique": false,
+          "description": "Chỉ mục trên count_id để tối ưu hóa truy vấn mục kiểm kê."
+        },
+        {
+          "name": "idx_count_items_inventory_id",
+          "columns": ["inventory_id"],
+          "unique": false,
+          "description": "Chỉ mục trên inventory_id để tối ưu hóa truy vấn theo tồn kho."
+        },
+        {
+          "name": "idx_count_items_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_count_items_count_id",
+          "column": "count_id",
+          "references": {
+            "table": "inventory_counts",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết mục kiểm kê với kiểm kê."
+        },
+        {
+          "name": "fk_count_items_inventory_id",
+          "column": "inventory_id",
+          "references": {
+            "table": "inventory",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết mục kiểm kê với tồn kho."
+        }
+      ]
+    },
+    "low_stock_alerts": {
+      "description": "Bảng lưu trữ thông báo khi tồn kho đạt mức thấp, hỗ trợ quản lý cảnh báo.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTO_INCREMENT",
+          "description": "Khóa chính tự động tăng, định danh duy nhất cho cảnh báo."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "inventory_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của bản ghi tồn kho."
+        },
+        {
+          "name": "current_quantity",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Số lượng hiện tại."
+        },
+        {
+          "name": "reorder_level",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "description": "Mức tồn kho tối thiểu."
+        },
+        {
+          "name": "alert_level",
+          "type": "varchar",
+          "length": 50,
+          "constraints": "NOT NULL",
+          "enum": ["low", "critical"],
+          "description": "Mức độ cảnh báo (thấp, rất thấp)."
+        },
+        {
+          "name": "is_acknowledged",
+          "type": "boolean",
+          "constraints": "DEFAULT FALSE",
+          "description": "Trạng thái xác nhận cảnh báo."
+        },
+        {
+          "name": "acknowledged_by",
+          "type": "integer",
+          "description": "Mã định danh của người xác nhận."
+        },
+        {
+          "name": "acknowledged_at",
+          "type": "timestamp",
+          "description": "Thời gian xác nhận."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "description": "Thời gian tạo cảnh báo."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_alerts_inventory_id",
+          "columns": ["inventory_id"],
+          "unique": false,
+          "description": "Chỉ mục trên inventory_id để tối ưu hóa truy vấn cảnh báo."
+        },
+        {
+          "name": "idx_alerts_store_id",
+          "columns": ["store_id"],
+          "unique": false,
+          "description": "Chỉ mục trên store_id để tối ưu hóa truy vấn theo cửa hàng."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_alerts_inventory_id",
+          "column": "inventory_id",
+          "references": {
+            "table": "inventory",
+            "column": "id"
+          },
+          "on_delete": "CASCADE",
+          "on_update": "CASCADE",
+          "description": "Liên kết cảnh báo với tồn kho."
+        }
+      ]
+    }
+  }
+}

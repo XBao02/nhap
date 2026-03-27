@@ -1,0 +1,71 @@
+export default {
+  photo: {
+    title: 'Quản lý Ảnh',
+    folder: {
+      select: 'Chọn Thư mục',
+      selectPlaceholder: 'Chọn một thư mục',
+      create: 'Tạo Thư mục',
+      createNew: 'Tạo Thư mục Mới',
+      namePlaceholder: 'Nhập tên thư mục',
+      tree: 'Cấu trúc Thư mục',
+    },
+    download: {
+      fromUrl: 'Tải Ảnh từ URL',
+      urlPlaceholder: 'Nhập URL ảnh',
+    },
+    actions: {
+      title: 'Hành động',
+      camera: 'Chụp từ Máy ảnh',
+      library: 'Tải lên từ Thư viện',
+      deleteSelected: 'Xóa ({count})',
+      create: 'Tạo',
+      cancel: 'Hủy',
+      download: 'Tải xuống',
+      search: 'Tìm kiếm',
+      reset: 'Đặt lại',
+      retry: 'Thử lại',
+      delete: 'Xóa',
+    },
+    view: {
+      mode: 'Chế độ Xem',
+    },
+    images: {
+      inFolder: 'Ảnh trong "{folderName}"',
+    },
+    search: {
+      title: 'Tìm kiếm Ảnh',
+      placeholder: 'Nhập tên ảnh',
+    },
+    empty: {
+      noImages: 'Không tìm thấy ảnh trong thư mục này',
+    },
+    error: {
+      title: 'Lỗi',
+      init: 'Không thể khởi tạo quản lý ảnh',
+      loadFolders: 'Không thể tải danh sách thư mục',
+      loadImages: 'Không thể tải danh sách ảnh',
+      folderNameRequired: 'Tên thư mục là bắt buộc',
+      createFolder: 'Không thể tạo thư mục',
+      selectFolderFirst: 'Vui lòng chọn thư mục trước',
+      urlRequired: 'URL ảnh là bắt buộc',
+      uploadImage: 'Không thể tải lên ảnh',
+      downloadImage: 'Không thể tải ảnh xuống',
+      deleteImages: 'Không thể xóa ảnh',
+      searchImages: 'Không thể tìm kiếm ảnh',
+      moveImage: 'Không thể di chuyển ảnh',
+      regenerateThumbnails: 'Không thể tạo lại ảnh thu nhỏ',
+    },
+    success: {
+      title: 'Thành công',
+      folderCreated: 'Tạo thư mục thành công',
+      imageDownloaded: 'Tải ảnh xuống thành công',
+      imagesDeleted: 'Xóa ảnh thành công',
+      imageMoved: 'Di chuyển ảnh thành công',
+      thumbnailsRegenerated: 'Tạo lại ảnh thu nhỏ thành công',
+    },
+    confirm: {
+      title: 'Xác nhận',
+      deleteImages: 'Xóa {count} ảnh?',
+    },
+  },
+};

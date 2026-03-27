@@ -1,0 +1,73 @@
+{
+  "roles": [
+    {
+      "id": "guest",
+      "name": "Khách dùng thử",
+      "description": "Truy cập giới hạn, không lưu dữ liệu vĩnh viễn",
+      "permissions": [
+        "view_products",
+        "create_order"
+      ],
+      "features": [
+        "quick_sale"
+      ]
+    },
+    {
+      "id": "individual",
+      "name": "Cá nhân bán hàng",
+      "description": "Cá nhân tự kinh doanh nhỏ lẻ",
+      "permissions": [
+        "view_products",
+        "manage_products",
+        "create_order",
+        "view_reports"
+      ],
+      "features": [
+        "quick_sale",
+        "product_management",
+        "basic_reports"
+      ]
+    },
+    {
+      "id": "staff",
+      "name": "Nhân viên bán hàng",
+      "description": "Chỉ có quyền bán hàng và xem sản phẩm",
+      "permissions": [
+        "view_products",
+        "create_order"
+      ],
+      "features": [
+        "quick_sale"
+      ]
+    },
+    {
+      "id": "manager",
+      "name": "Quản lý cửa hàng",
+      "description": "Quản lý nhân viên, sản phẩm và xem báo cáo",
+      "permissions": [
+        "view_products",
+        "manage_products",
+        "manage_orders",
+        "view_reports",
+        "manage_staff"
+      ],
+      "features": [
+        "quick_sale",
+        "product_management",
+        "advanced_reports",
+        "staff_management"
+      ]
+    },
+    {
+      "id": "owner",
+      "name": "Chủ doanh nghiệp",
+      "description": "Toàn quyền hệ thống và phân quyền người dùng",
+      "permissions": [
+        "all"
+      ],
+      "features": [
+        "all"
+      ]
+    }
+  ]
+}

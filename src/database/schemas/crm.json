@@ -1,0 +1,893 @@
+{
+    "version": "v1",
+    "database_name": "crm.db",
+    "description": "Cơ sở dữ liệu quản lý toàn diện thông tin khách hàng, chương trình tích điểm và các hoạt động CRM",
+    "type_mapping": {
+        "sqlite": {
+            "string": "TEXT",
+            "varchar": "TEXT",
+            "char": "TEXT",
+            "email": "TEXT",
+            "url": "TEXT",
+            "uuid": "TEXT",
+            "integer": "INTEGER",
+            "bigint": "INTEGER",
+            "smallint": "INTEGER",
+            "tinyint": "INTEGER",
+            "decimal": "REAL",
+            "numeric": "REAL",
+            "float": "REAL",
+            "double": "REAL",
+            "boolean": "INTEGER",
+            "timestamp": "TEXT",
+            "datetime": "TEXT",
+            "date": "TEXT",
+            "time": "TEXT",
+            "json": "TEXT",
+            "array": "TEXT",
+            "blob": "BLOB",
+            "binary": "BLOB"
+        }
+    },
+    "schemas": {
+        "customers": {
+            "description": "Bảng lưu trữ thông tin cơ bản và chi tiết của khách hàng",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Mã định danh duy nhất của khách hàng (tự động tăng)"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã cửa hàng mà khách hàng thuộc về"
+                },
+                {
+                    "name": "customer_code",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "UNIQUE",
+                    "description": "Mã khách hàng tự định nghĩa (có thể để trống)"
+                },
+                {
+                    "name": "first_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Tên của khách hàng"
+                },
+                {
+                    "name": "last_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Họ của khách hàng"
+                },
+                {
+                    "name": "full_name",
+                    "type": "varchar",
+                    "length": 200,
+                    "constraints": "NOT NULL",
+                    "description": "Họ và tên đầy đủ của khách hàng"
+                },
+                {
+                    "name": "phone",
+                    "type": "varchar",
+                    "length": 20,
+                    "description": "Số điện thoại liên hệ"
+                },
+                {
+                    "name": "email",
+                    "type": "email",
+                    "length": 100,
+                    "constraints": "UNIQUE",
+                    "description": "Địa chỉ email của khách hàng"
+                },
+                {
+                    "name": "id_number",
+                    "type": "varchar",
+                    "length": 20,
+                    "description": "Số chứng minh thư/căn cước công dân"
+                },
+                {
+                    "name": "date_of_birth",
+                    "type": "date",
+                    "description": "Ngày sinh của khách hàng"
+                },
+                {
+                    "name": "gender",
+                    "type": "varchar",
+                    "length": 10,
+                    "enum": ["male", "female", "other"],
+                    "description": "Giới tính (male/female/other)"
+                },
+                {
+                    "name": "address",
+                    "type": "varchar",
+                    "length": 255,
+                    "description": "Địa chỉ chính của khách hàng"
+                },
+                {
+                    "name": "city",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Thành phố/tỉnh"
+                },
+                {
+                    "name": "district",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Quận/huyện"
+                },
+                {
+                    "name": "ward",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Phường/xã"
+                },
+                {
+                    "name": "postal_code",
+                    "type": "varchar",
+                    "length": 20,
+                    "description": "Mã bưu điện"
+                },
+                {
+                    "name": "country",
+                    "type": "char",
+                    "length": 2,
+                    "constraints": "DEFAULT 'VN'",
+                    "description": "Mã quốc gia (mặc định Việt Nam)"
+                },
+                {
+                    "name": "avatar_url",
+                    "type": "url",
+                    "description": "Đường dẫn đến ảnh đại diện của khách hàng"
+                },
+                {
+                    "name": "customer_group",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "DEFAULT 'regular'",
+                    "enum": ["regular", "vip", "wholesale"],
+                    "description": "Nhóm khách hàng (regular, vip, wholesale, v.v.)"
+                },
+                {
+                    "name": "tags",
+                    "type": "json",
+                    "description": "Các thẻ gắn nhãn khách hàng (JSON array)"
+                },
+                {
+                    "name": "notes",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Ghi chú nội bộ về khách hàng"
+                },
+                {
+                    "name": "preferred_language",
+                    "type": "char",
+                    "length": 2,
+                    "constraints": "DEFAULT 'vi'",
+                    "enum": ["vi", "en"],
+                    "description": "Ngôn ngữ ưa thích của khách hàng"
+                },
+                {
+                    "name": "marketing_consent",
+                    "type": "boolean",
+                    "constraints": "DEFAULT FALSE",
+                    "description": "Đồng ý nhận thông tin marketing (1: có, 0: không)"
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái tài khoản khách hàng (1: hoạt động, 0: không hoạt động)"
+                },
+                {
+                    "name": "total_orders",
+                    "type": "integer",
+                    "constraints": "DEFAULT 0",
+                    "description": "Tổng số đơn hàng đã mua"
+                },
+                {
+                    "name": "total_spent",
+                    "type": "decimal",
+                    "precision": 15,
+                    "scale": 2,
+                    "constraints": "DEFAULT 0",
+                    "description": "Tổng số tiền đã chi tiêu"
+                },
+                {
+                    "name": "average_order_value",
+                    "type": "decimal",
+                    "precision": 15,
+                    "scale": 2,
+                    "constraints": "DEFAULT 0",
+                    "description": "Giá trị đơn hàng trung bình"
+                },
+                {
+                    "name": "last_order_date",
+                    "type": "date",
+                    "description": "Ngày mua hàng lần cuối"
+                },
+                {
+                    "name": "first_order_date",
+                    "type": "date",
+                    "description": "Ngày mua hàng lần đầu"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo hồ sơ khách hàng"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian cập nhật thông tin lần cuối"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_customers_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                },
+                {
+                    "name": "idx_customers_customer_code",
+                    "columns": ["customer_code"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo mã khách hàng là duy nhất"
+                },
+                {
+                    "name": "idx_customers_email",
+                    "columns": ["email"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo email là duy nhất"
+                }
+            ],
+            "foreign_keys": []
+        },
+        "customer_addresses": {
+            "description": "Bảng lưu trữ các địa chỉ khác nhau của khách hàng (nhà riêng, công ty, giao hàng, v.v.)",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Mã định danh duy nhất của địa chỉ"
+                },
+                {
+                    "name": "customer_id",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Mã khách hàng sở hữu địa chỉ này"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã cửa hàng quản lý địa chỉ này"
+                },
+                {
+                    "name": "type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL",
+                    "enum": ["home", "office", "shipping", "billing"],
+                    "description": "Loại địa chỉ (home, office, shipping, billing)"
+                },
+                {
+                    "name": "label",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Nhãn tự đặt cho địa chỉ (VD: Nhà riêng, Công ty)"
+                },
+                {
+                    "name": "address_line_1",
+                    "type": "varchar",
+                    "length": 255,
+                    "constraints": "NOT NULL",
+                    "description": "Dòng địa chỉ thứ nhất (số nhà, tên đường)"
+                },
+                {
+                    "name": "address_line_2",
+                    "type": "varchar",
+                    "length": 255,
+                    "description": "Dòng địa chỉ thứ hai (tòa nhà, căn hộ)"
+                },
+                {
+                    "name": "city",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Thành phố/tỉnh"
+                },
+                {
+                    "name": "district",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Quận/huyện"
+                },
+                {
+                    "name": "ward",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Phường/xã"
+                },
+                {
+                    "name": "postal_code",
+                    "type": "varchar",
+                    "length": 20,
+                    "description": "Mã bưu điện"
+                },
+                {
+                    "name": "country",
+                    "type": "char",
+                    "length": 2,
+                    "constraints": "DEFAULT 'VN'",
+                    "description": "Mã quốc gia"
+                },
+                {
+                    "name": "is_default",
+                    "type": "boolean",
+                    "constraints": "DEFAULT FALSE",
+                    "description": "Địa chỉ mặc định (1: có, 0: không)"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo địa chỉ"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_customer_addresses_customer_id",
+                    "columns": ["customer_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo customer_id"
+                },
+                {
+                    "name": "idx_customer_addresses_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_customer_addresses_customer_id",
+                    "column": "customer_id",
+                    "references": {
+                        "table": "customers",
+                        "column": "id"
+                    },
+                    "on_delete": "CASCADE",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng customers"
+                }
+            ]
+        },
+        "loyalty_accounts": {
+            "description": "Bảng quản lý tài khoản tích điểm và hạng thành viên của khách hàng",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Mã định danh duy nhất của tài khoản tích điểm"
+                },
+                {
+                    "name": "customer_id",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Mã khách hàng sở hữu tài khoản tích điểm"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã cửa hàng quản lý tài khoản tích điểm"
+                },
+                {
+                    "name": "loyalty_number",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL UNIQUE",
+                    "description": "Số thẻ thành viên/tích điểm"
+                },
+                {
+                    "name": "points_balance",
+                    "type": "integer",
+                    "constraints": "NOT NULL DEFAULT 0",
+                    "description": "Số điểm hiện tại trong tài khoản"
+                },
+                {
+                    "name": "points_earned",
+                    "type": "integer",
+                    "constraints": "DEFAULT 0",
+                    "description": "Tổng điểm đã tích được"
+                },
+                {
+                    "name": "points_redeemed",
+                    "type": "integer",
+                    "constraints": "DEFAULT 0",
+                    "description": "Tổng điểm đã sử dụng"
+                },
+                {
+                    "name": "tier",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL DEFAULT 'Bronze'",
+                    "enum": ["Bronze", "Silver", "Gold", "Platinum"],
+                    "description": "Hạng thành viên hiện tại (Bronze, Silver, Gold, Platinum)"
+                },
+                {
+                    "name": "tier_progress",
+                    "type": "decimal",
+                    "precision": 5,
+                    "scale": 2,
+                    "constraints": "DEFAULT 0",
+                    "description": "Tiến độ lên hạng tiếp theo (%)"
+                },
+                {
+                    "name": "next_tier",
+                    "type": "varchar",
+                    "length": 20,
+                    "enum": ["Silver", "Gold", "Platinum"],
+                    "description": "Hạng thành viên tiếp theo"
+                },
+                {
+                    "name": "total_spent",
+                    "type": "decimal",
+                    "precision": 15,
+                    "scale": 2,
+                    "constraints": "DEFAULT 0",
+                    "description": "Tổng số tiền đã chi tiêu để tính hạng"
+                },
+                {
+                    "name": "enrollment_date",
+                    "type": "date",
+                    "description": "Ngày đăng ký chương trình tích điểm"
+                },
+                {
+                    "name": "last_activity_date",
+                    "type": "date",
+                    "description": "Ngày hoạt động cuối cùng"
+                },
+                {
+                    "name": "expiry_date",
+                    "type": "date",
+                    "description": "Ngày hết hạn tài khoản tích điểm"
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái tài khoản tích điểm (1: hoạt động, 0: tạm khóa)"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo tài khoản tích điểm"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian cập nhật tài khoản lần cuối"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_loyalty_accounts_customer_id",
+                    "columns": ["customer_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo customer_id"
+                },
+                {
+                    "name": "idx_loyalty_accounts_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                },
+                {
+                    "name": "idx_loyalty_accounts_loyalty_number",
+                    "columns": ["loyalty_number"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo số thẻ thành viên là duy nhất"
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_loyalty_accounts_customer_id",
+                    "column": "customer_id",
+                    "references": {
+                        "table": "customers",
+                        "column": "id"
+                    },
+                    "on_delete": "CASCADE",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng customers"
+                }
+            ]
+        },
+        "loyalty_transactions": {
+            "description": "Bảng lưu trữ lịch sử giao dịch điểm thưởng (tích điểm, sử dụng điểm)",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Mã định danh duy nhất của giao dịch điểm"
+                },
+                {
+                    "name": "loyalty_account_id",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Mã tài khoản tích điểm thực hiện giao dịch"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã cửa hàng nơi thực hiện giao dịch"
+                },
+                {
+                    "name": "transaction_type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL",
+                    "enum": ["earn", "redeem", "expire", "adjustment"],
+                    "description": "Loại giao dịch (earn, redeem, expire, adjustment)"
+                },
+                {
+                    "name": "points",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Số điểm trong giao dịch (dương: tích, âm: sử dụng)"
+                },
+                {
+                    "name": "order_reference",
+                    "type": "uuid",
+                    "description": "Mã đơn hàng tham chiếu (nếu có)"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Mô tả chi tiết về giao dịch"
+                },
+                {
+                    "name": "balance_before",
+                    "type": "integer",
+                    "description": "Số dư điểm trước giao dịch"
+                },
+                {
+                    "name": "balance_after",
+                    "type": "integer",
+                    "description": "Số dư điểm sau giao dịch"
+                },
+                {
+                    "name": "expiry_date",
+                    "type": "date",
+                    "description": "Ngày hết hạn của điểm (đối với điểm tích được)"
+                },
+                {
+                    "name": "user_id",
+                    "type": "integer",
+                    "description": "Mã nhân viên thực hiện giao dịch"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian thực hiện giao dịch"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_loyalty_transactions_loyalty_account_id",
+                    "columns": ["loyalty_account_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo loyalty_account_id"
+                },
+                {
+                    "name": "idx_loyalty_transactions_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_loyalty_transactions_loyalty_account_id",
+                    "column": "loyalty_account_id",
+                    "references": {
+                        "table": "loyalty_accounts",
+                        "column": "id"
+                    },
+                    "on_delete": "CASCADE",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng loyalty_accounts"
+                }
+            ]
+        },
+        "customer_groups": {
+            "description": "Bảng định nghĩa các nhóm khách hàng và chính sách ưu đãi tương ứng",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Mã định danh duy nhất của nhóm khách hàng"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã cửa hàng quản lý nhóm khách hàng này"
+                },
+                {
+                    "name": "name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên nhóm khách hàng"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Mô tả chi tiết về nhóm khách hàng"
+                },
+                {
+                    "name": "discount_percentage",
+                    "type": "decimal",
+                    "precision": 5,
+                    "scale": 2,
+                    "constraints": "DEFAULT 0",
+                    "description": "Tỷ lệ chiết khấu mặc định cho nhóm (%)"
+                },
+                {
+                    "name": "special_pricing",
+                    "type": "boolean",
+                    "constraints": "DEFAULT FALSE",
+                    "description": "Áp dụng bảng giá đặc biệt (1: có, 0: không)"
+                },
+                {
+                    "name": "conditions",
+                    "type": "json",
+                    "description": "Điều kiện để thuộc nhóm này (JSON format)"
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái nhóm (1: hoạt động, 0: không hoạt động)"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo nhóm khách hàng"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_customer_groups_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                }
+            ],
+            "foreign_keys": []
+        },
+        "customer_interactions": {
+            "description": "Bảng lưu trữ các tương tác, hỗ trợ và liên hệ với khách hàng",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Mã định danh duy nhất của tương tác"
+                },
+                {
+                    "name": "customer_id",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Mã khách hàng tham gia tương tác"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã cửa hàng xử lý tương tác"
+                },
+                {
+                    "name": "interaction_type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL",
+                    "enum": ["inquiry", "complaint", "support", "feedback"],
+                    "description": "Loại tương tác (inquiry, complaint, support, feedback)"
+                },
+                {
+                    "name": "channel",
+                    "type": "varchar",
+                    "length": 20,
+                    "enum": ["phone", "email", "chat", "in-person"],
+                    "description": "Kênh liên hệ (phone, email, chat, in-person)"
+                },
+                {
+                    "name": "subject",
+                    "type": "varchar",
+                    "length": 200,
+                    "description": "Tiêu đề/chủ đề tương tác"
+                },
+                {
+                    "name": "content",
+                    "type": "varchar",
+                    "length": 1000,
+                    "description": "Nội dung chi tiết của tương tác"
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "DEFAULT 'open'",
+                    "enum": ["open", "in_progress", "resolved", "closed"],
+                    "description": "Trạng thái xử lý (open, in_progress, resolved, closed)"
+                },
+                {
+                    "name": "priority",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "DEFAULT 'normal'",
+                    "enum": ["low", "normal", "high", "urgent"],
+                    "description": "Mức độ ưu tiên (low, normal, high, urgent)"
+                },
+                {
+                    "name": "assigned_to",
+                    "type": "integer",
+                    "description": "Mã nhân viên được giao xử lý"
+                },
+                {
+                    "name": "created_by",
+                    "type": "integer",
+                    "description": "Mã nhân viên tạo tương tác"
+                },
+                {
+                    "name": "resolved_at",
+                    "type": "timestamp",
+                    "description": "Thời gian giải quyết xong"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo tương tác"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian cập nhật tương tác lần cuối"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_customer_interactions_customer_id",
+                    "columns": ["customer_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo customer_id"
+                },
+                {
+                    "name": "idx_customer_interactions_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_customer_interactions_customer_id",
+                    "column": "customer_id",
+                    "references": {
+                        "table": "customers",
+                        "column": "id"
+                    },
+                    "on_delete": "CASCADE",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng customers"
+                }
+            ]
+        },
+        "customer_preferences": {
+            "description": "Bảng lưu trữ các sở thích và tùy chọn cá nhân của khách hàng",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Mã định danh duy nhất của tùy chọn"
+                },
+                {
+                    "name": "customer_id",
+                    "type": "integer",
+                    "constraints": "NOT NULL",
+                    "description": "Mã khách hàng sở hữu tùy chọn này"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã cửa hàng quản lý tùy chọn này"
+                },
+                {
+                    "name": "preference_type",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "enum": ["notification", "privacy", "product", "service"],
+                    "description": "Loại tùy chọn (notification, privacy, product, service)"
+                },
+                {
+                    "name": "preference_key",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Khóa định danh của tùy chọn"
+                },
+                {
+                    "name": "preference_value",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Giá trị của tùy chọn"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo tùy chọn"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian cập nhật tùy chọn lần cuối"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_customer_preferences_customer_id",
+                    "columns": ["customer_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo customer_id"
+                },
+                {
+                    "name": "idx_customer_preferences_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                }
+            ],
+            "foreign_keys": [
+                {
+                    "name": "fk_customer_preferences_customer_id",
+                    "column": "customer_id",
+                    "references": {
+                        "table": "customers",
+                        "column": "id"
+                    },
+                    "on_delete": "CASCADE",
+                    "on_update": "CASCADE",
+                    "description": "Khóa ngoại liên kết với bảng customers"
+                }
+            ]
+        }
+    }
+}

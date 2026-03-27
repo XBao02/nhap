@@ -1,0 +1,231 @@
+{
+    "version": "v1",
+    "database_name": "analytics.db",
+    "description": "Tập trung dữ liệu để tạo báo cáo, phân tích và lưu trữ nhật ký kiểm toán (audit trail) cho toàn hệ thống.",
+    "type_mapping": {
+        "sqlite": {
+            "string": "TEXT",
+            "varchar": "TEXT",
+            "char": "TEXT",
+            "email": "TEXT",
+            "url": "TEXT",
+            "uuid": "TEXT",
+            "integer": "INTEGER",
+            "bigint": "INTEGER",
+            "smallint": "INTEGER",
+            "tinyint": "INTEGER",
+            "decimal": "REAL",
+            "numeric": "REAL",
+            "float": "REAL",
+            "double": "REAL",
+            "boolean": "INTEGER",
+            "timestamp": "TEXT",
+            "datetime": "TEXT",
+            "date": "TEXT",
+            "time": "TEXT",
+            "json": "TEXT",
+            "array": "TEXT",
+            "blob": "BLOB",
+            "binary": "BLOB"
+        }
+    },
+    "schemas": {
+        "reports": {
+            "description": "Lưu trữ thông tin báo cáo và phân tích dữ liệu.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Định danh duy nhất của báo cáo."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh cửa hàng liên quan đến báo cáo."
+                },
+                {
+                    "name": "user_id",
+                    "type": "integer",
+                    "description": "Định danh người dùng tạo báo cáo."
+                },
+                {
+                    "name": "report_type",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "enum": ["revenue", "inventory", "customer", "transaction"],
+                    "description": "Loại báo cáo (ví dụ: doanh thu, tồn kho)."
+                },
+                {
+                    "name": "report_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên của báo cáo."
+                },
+                {
+                    "name": "date_from",
+                    "type": "date",
+                    "constraints": "NOT NULL",
+                    "description": "Ngày bắt đầu của dữ liệu báo cáo."
+                },
+                {
+                    "name": "date_to",
+                    "type": "date",
+                    "constraints": "NOT NULL",
+                    "description": "Ngày kết thúc của dữ liệu báo cáo."
+                },
+                {
+                    "name": "filters",
+                    "type": "json",
+                    "description": "Bộ lọc áp dụng cho báo cáo."
+                },
+                {
+                    "name": "data",
+                    "type": "json",
+                    "description": "Dữ liệu báo cáo ở định dạng JSON hoặc văn bản."
+                },
+                {
+                    "name": "file_path",
+                    "type": "varchar",
+                    "length": 255,
+                    "description": "Đường dẫn tới file báo cáo (nếu có)."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "DEFAULT 'generated'",
+                    "enum": ["generated", "processing", "completed", "failed"],
+                    "description": "Trạng thái của báo cáo."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo báo cáo."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_reports_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_reports_report_type",
+                    "columns": ["report_type"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo report_type."
+                },
+                {
+                    "name": "idx_reports_created_at",
+                    "columns": ["created_at"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo thời gian tạo."
+                }
+            ],
+            "foreign_keys": []
+        },
+        "audit_logs": {
+            "description": "Lưu trữ nhật ký kiểm toán cho các hành động trong hệ thống.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Định danh duy nhất của bản ghi nhật ký."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "description": "Định danh cửa hàng liên quan đến hành động."
+                },
+                {
+                    "name": "user_id",
+                    "type": "integer",
+                    "description": "Định danh người dùng thực hiện hành động."
+                },
+                {
+                    "name": "action",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "enum": ["create", "update", "delete", "view"],
+                    "description": "Hành động được thực hiện (ví dụ: tạo, cập nhật, xóa)."
+                },
+                {
+                    "name": "table_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên bảng bị ảnh hưởng bởi hành động."
+                },
+                {
+                    "name": "record_id",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Định danh bản ghi bị ảnh hưởng."
+                },
+                {
+                    "name": "old_values",
+                    "type": "json",
+                    "description": "Giá trị cũ trước khi thay đổi."
+                },
+                {
+                    "name": "new_values",
+                    "type": "json",
+                    "description": "Giá trị mới sau khi thay đổi."
+                },
+                {
+                    "name": "ip_address",
+                    "type": "varchar",
+                    "length": 45,
+                    "description": "Địa chỉ IP của người dùng thực hiện hành động."
+                },
+                {
+                    "name": "user_agent",
+                    "type": "varchar",
+                    "length": 255,
+                    "description": "Thông tin trình duyệt hoặc thiết bị của người dùng."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo nhật ký kiểm toán."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_audit_logs_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_audit_logs_user_id",
+                    "columns": ["user_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo user_id."
+                },
+                {
+                    "name": "idx_audit_logs_table_name",
+                    "columns": ["table_name"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo table_name."
+                },
+                {
+                    "name": "idx_audit_logs_created_at",
+                    "columns": ["created_at"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo thời gian tạo."
+                }
+            ],
+            "foreign_keys": []
+        }
+    }
+}

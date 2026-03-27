@@ -1,0 +1,32 @@
+export default {
+  settings: {
+    title: 'Settings',
+    industryTitle: 'Industries',
+    selectIndustries: 'Select Fields',
+    selected: 'Selected',
+    none: 'None',
+    industries: {
+      retail: 'Retail',
+      fnb: 'Food & Beverage',
+      spa: 'Spa',
+      pharmacy: 'Pharmacy',
+      general: 'General',
+      chain: 'Chain',
+      others: 'Others',
+    },
+    roleTitle: 'Roles',
+    selectRoles: 'Select Roles',
+    roles: {
+      trial: 'Trial User',
+      individual: 'Independent Individual',
+      employee: 'Employee',
+      manager: 'Manager',
+      owner: 'Business Owner',
+      accountant: 'Accountant',
+    },
+    languageTitle: 'Language',
+    themeTitle: 'Dark Mode ?',
+    savedSuccessfully: "Settings saved successfully",
+    saveError: "Error saving settings",
+  },
+};

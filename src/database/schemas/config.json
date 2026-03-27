@@ -1,0 +1,642 @@
+{
+    "version": "v1",
+    "database_name": "config.db",
+    "description": "Cơ sở dữ liệu quản lý cấu hình hệ thống - Lưu trữ tất cả các thiết lập, tham số cấu hình, quy tắc kinh doanh và feature flags của từng cửa hàng. Hỗ trợ tùy chỉnh linh hoạt theo nhu cầu kinh doanh cụ thể của từng store mà không cần thay đổi code ứng dụng.",
+    "type_mapping": {
+        "sqlite": {
+            "string": "TEXT",
+            "varchar": "TEXT",
+            "char": "TEXT",
+            "email": "TEXT",
+            "url": "TEXT",
+            "uuid": "TEXT",
+            "integer": "INTEGER",
+            "bigint": "INTEGER",
+            "smallint": "INTEGER",
+            "tinyint": "INTEGER",
+            "decimal": "REAL",
+            "numeric": "REAL",
+            "float": "REAL",
+            "double": "REAL",
+            "boolean": "INTEGER",
+            "timestamp": "TEXT",
+            "datetime": "TEXT",
+            "date": "TEXT",
+            "time": "TEXT",
+            "json": "TEXT",
+            "array": "TEXT",
+            "blob": "BLOB",
+            "binary": "BLOB"
+        }
+    },
+    "schemas": {
+        "settings": {
+            "description": "Bảng lưu trữ các thiết lập cấu hình hệ thống theo từng cửa hàng",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Khóa chính tự động tăng, định danh duy nhất cho mỗi thiết lập"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã định danh cửa hàng - khóa liên kết với hệ thống core, xác định thiết lập thuộc về cửa hàng nào"
+                },
+                {
+                    "name": "category",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "enum": ["payment", "notification", "business_rules", "ui_config"],
+                    "description": "Danh mục phân loại thiết lập (vd: payment, notification, business_rules, ui_config) để nhóm các cấu hình cùng loại"
+                },
+                {
+                    "name": "key",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Khóa định danh duy nhất của thiết lập trong category (vd: tax_rate, loyalty_points_ratio, max_discount_percent)"
+                },
+                {
+                    "name": "value",
+                    "type": "varchar",
+                    "length": 1000,
+                    "description": "Giá trị của thiết lập được lưu dưới dạng text, có thể là string, number hoặc JSON tùy theo data_type"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Mô tả chi tiết về chức năng và cách sử dụng của thiết lập này, giúp admin hiểu rõ tác dụng"
+                },
+                {
+                    "name": "data_type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "DEFAULT 'string'",
+                    "enum": ["string", "number", "boolean", "json", "array"],
+                    "description": "Kiểu dữ liệu của value (string, number, boolean, json, array) để ứng dụng parse đúng định dạng"
+                },
+                {
+                    "name": "is_encrypted",
+                    "type": "boolean",
+                    "constraints": "DEFAULT FALSE",
+                    "description": "Flag đánh dấu value có được mã hóa hay không (0=không, 1=có) cho các thông tin nhạy cảm như API key"
+                },
+                {
+                    "name": "is_system",
+                    "type": "boolean",
+                    "constraints": "DEFAULT FALSE",
+                    "description": "Flag phân biệt thiết lập hệ thống (0=user config, 1=system config) để kiểm soát quyền chỉnh sửa"
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái kích hoạt của thiết lập (0=vô hiệu, 1=kích hoạt) để tạm thời disable mà không xóa"
+                },
+                {
+                    "name": "validation_rules",
+                    "type": "json",
+                    "description": "Quy tắc validation dưới dạng JSON để kiểm tra tính hợp lệ của value khi cập nhật (min, max, regex, enum)"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm tạo thiết lập ban đầu"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm cập nhật gần nhất của thiết lập"
+                },
+                {
+                    "name": "updated_by",
+                    "type": "integer",
+                    "description": "ID của user thực hiện cập nhật gần nhất để audit trail"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_settings_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                },
+                {
+                    "name": "idx_settings_category_key",
+                    "columns": ["category", "key"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo cặp category-key là duy nhất"
+                }
+            ],
+            "foreign_keys": []
+        },
+        "feature_flags": {
+            "description": "Bảng quản lý các tính năng có thể bật/tắt động cho từng cửa hàng",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Khóa chính tự động tăng"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã định danh cửa hàng áp dụng feature flag"
+                },
+                {
+                    "name": "feature_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên định danh của tính năng (vd: online_ordering, loyalty_program, multi_payment)"
+                },
+                {
+                    "name": "is_enabled",
+                    "type": "boolean",
+                    "constraints": "DEFAULT FALSE",
+                    "description": "Trạng thái bật/tắt tính năng (0=tắt, 1=bật)"
+                },
+                {
+                    "name": "rollout_percentage",
+                    "type": "integer",
+                    "constraints": "DEFAULT 100",
+                    "description": "Phần trăm rollout tính năng (0-100) để triển khai từ từ hoặc A/B testing"
+                },
+                {
+                    "name": "target_users",
+                    "type": "json",
+                    "description": "Danh sách user_id hoặc điều kiện target cụ thể dưới dạng JSON"
+                },
+                {
+                    "name": "start_date",
+                    "type": "timestamp",
+                    "description": "Thời điểm bắt đầu kích hoạt tính năng"
+                },
+                {
+                    "name": "end_date",
+                    "type": "timestamp",
+                    "description": "Thời điểm kết thúc tính năng (nếu có)"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Mô tả chức năng và mục đích của tính năng"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm tạo feature flag"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_feature_flags_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                },
+                {
+                    "name": "idx_feature_flags_feature_name",
+                    "columns": ["feature_name"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo feature_name là duy nhất"
+                }
+            ],
+            "foreign_keys": []
+        },
+        "business_rules": {
+            "description": "Bảng lưu trữ các quy tắc kinh doanh có thể cấu hình động",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Khóa chính tự động tăng"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã định danh cửa hàng áp dụng quy tắc"
+                },
+                {
+                    "name": "rule_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên định danh quy tắc (vd: discount_limit, refund_policy, loyalty_expiry)"
+                },
+                {
+                    "name": "rule_type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL",
+                    "enum": ["validation", "calculation", "workflow", "policy"],
+                    "description": "Loại quy tắc (validation, calculation, workflow, policy) để phân loại xử lý"
+                },
+                {
+                    "name": "conditions",
+                    "type": "json",
+                    "description": "Điều kiện áp dụng quy tắc dưới dạng JSON (vd: order_amount > 1000000)"
+                },
+                {
+                    "name": "actions",
+                    "type": "json",
+                    "description": "Hành động thực hiện khi thỏa mãn điều kiện dưới dạng JSON"
+                },
+                {
+                    "name": "priority",
+                    "type": "integer",
+                    "constraints": "DEFAULT 0",
+                    "description": "Thứ tự ưu tiên thực hiện quy tắc khi có nhiều quy tắc cùng trigger"
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái kích hoạt quy tắc (0=vô hiệu, 1=kích hoạt)"
+                },
+                {
+                    "name": "effective_from",
+                    "type": "timestamp",
+                    "description": "Thời điểm bắt đầu hiệu lực của quy tắc"
+                },
+                {
+                    "name": "effective_to",
+                    "type": "timestamp",
+                    "description": "Thời điểm kết thúc hiệu lực của quy tắc"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Mô tả chi tiết quy tắc và cách thức hoạt động"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm tạo quy tắc"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm cập nhật gần nhất"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_business_rules_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                },
+                {
+                    "name": "idx_business_rules_rule_name",
+                    "columns": ["rule_name"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo rule_name là duy nhất"
+                }
+            ],
+            "foreign_keys": []
+        },
+        "workflow_templates": {
+            "description": "Bảng lưu trữ template quy trình làm việc có thể tùy chỉnh",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Khóa chính tự động tăng"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã định danh cửa hàng sở hữu workflow template"
+                },
+                {
+                    "name": "template_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên template workflow (vd: order_processing, refund_approval, inventory_restock)"
+                },
+                {
+                    "name": "workflow_type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL",
+                    "enum": ["sequential", "parallel", "conditional"],
+                    "description": "Loại workflow (sequential, parallel, conditional) để xác định cách thực thi"
+                },
+                {
+                    "name": "steps",
+                    "type": "json",
+                    "constraints": "NOT NULL",
+                    "description": "Cấu trúc các bước workflow dưới dạng JSON với thứ tự, điều kiện, action"
+                },
+                {
+                    "name": "trigger_conditions",
+                    "type": "json",
+                    "description": "Điều kiện kích hoạt workflow dưới dạng JSON"
+                },
+                {
+                    "name": "notification_rules",
+                    "type": "json",
+                    "description": "Quy tắc thông báo cho từng bước workflow dưới dạng JSON"
+                },
+                {
+                    "name": "escalation_rules",
+                    "type": "json",
+                    "description": "Quy tắc leo thang khi workflow không hoàn thành đúng hạn"
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái kích hoạt template (0=vô hiệu, 1=kích hoạt)"
+                },
+                {
+                    "name": "version",
+                    "type": "varchar",
+                    "length": 10,
+                    "constraints": "DEFAULT '1.0'",
+                    "description": "Phiên bản của template để quản lý thay đổi"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Mô tả mục đích và cách sử dụng workflow template"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm tạo template"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm cập nhật gần nhất"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_workflow_templates_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                },
+                {
+                    "name": "idx_workflow_templates_template_name",
+                    "columns": ["template_name"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo template_name là duy nhất"
+                }
+            ],
+            "foreign_keys": []
+        },
+        "ui_configurations": {
+            "description": "Bảng cấu hình giao diện người dùng tùy chỉnh theo từng cửa hàng",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Khóa chính tự động tăng"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã định danh cửa hàng áp dụng cấu hình UI"
+                },
+                {
+                    "name": "screen_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên màn hình/module áp dụng cấu hình (vd: pos_screen, dashboard, product_list)"
+                },
+                {
+                    "name": "component_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên component cụ thể trong màn hình (vd: header, sidebar, product_card)"
+                },
+                {
+                    "name": "config_type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL",
+                    "enum": ["layout", "styling", "behavior", "visibility"],
+                    "description": "Loại cấu hình (layout, styling, behavior, visibility) để phân loại xử lý"
+                },
+                {
+                    "name": "config_data",
+                    "type": "json",
+                    "constraints": "NOT NULL",
+                    "description": "Dữ liệu cấu hình chi tiết dưới dạng JSON (colors, sizes, positions, etc.)"
+                },
+                {
+                    "name": "device_type",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "DEFAULT 'all'",
+                    "enum": ["mobile", "tablet", "desktop", "all"],
+                    "description": "Loại thiết bị áp dụng (mobile, tablet, desktop, all) cho responsive design"
+                },
+                {
+                    "name": "user_role",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "DEFAULT 'all'",
+                    "enum": ["admin", "staff", "cashier", "all"],
+                    "description": "Role người dùng áp dụng cấu hình (admin, staff, cashier, all)"
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái kích hoạt cấu hình UI (0=vô hiệu, 1=kích hoạt)"
+                },
+                {
+                    "name": "priority",
+                    "type": "integer",
+                    "constraints": "DEFAULT 0",
+                    "description": "Thứ tự ưu tiên áp dụng khi có nhiều cấu hình conflict"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Mô tả mục đích và tác dụng của cấu hình UI"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm tạo cấu hình"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm cập nhật gần nhất"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_ui_configurations_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                },
+                {
+                    "name": "idx_ui_configurations_screen_component",
+                    "columns": ["screen_name", "component_name"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo cặp screen_name-component_name là duy nhất"
+                }
+            ],
+            "foreign_keys": []
+        },
+        "integration_configs": {
+            "description": "Bảng lưu trữ cấu hình tích hợp với các hệ thống bên ngoài",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Khóa chính tự động tăng"
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Mã định danh cửa hàng sở hữu cấu hình tích hợp"
+                },
+                {
+                    "name": "integration_name",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Tên hệ thống tích hợp (vd: payment_gateway, delivery_service, accounting_system)"
+                },
+                {
+                    "name": "provider",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Nhà cung cấp dịch vụ (vd: momo, zalopay, grab, shopee)"
+                },
+                {
+                    "name": "config_data",
+                    "type": "json",
+                    "constraints": "NOT NULL",
+                    "description": "Thông tin cấu hình tích hợp dưới dạng JSON (endpoints, credentials, settings)"
+                },
+                {
+                    "name": "is_encrypted",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Flag đánh dấu config_data có được mã hóa hay không (thường là có vì chứa credentials)"
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái kích hoạt tích hợp (0=vô hiệu, 1=kích hoạt)"
+                },
+                {
+                    "name": "is_sandbox",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Môi trường tích hợp (0=production, 1=sandbox/test) để phân biệt testing và live"
+                },
+                {
+                    "name": "webhook_url",
+                    "type": "url",
+                    "description": "URL webhook để nhận callback từ hệ thống bên ngoài"
+                },
+                {
+                    "name": "webhook_secret",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Secret key để verify webhook từ provider"
+                },
+                {
+                    "name": "rate_limit",
+                    "type": "integer",
+                    "description": "Giới hạn số request per minute đến API bên ngoài"
+                },
+                {
+                    "name": "timeout",
+                    "type": "integer",
+                    "constraints": "DEFAULT 30",
+                    "description": "Timeout (giây) cho API calls đến hệ thống bên ngoài"
+                },
+                {
+                    "name": "retry_count",
+                    "type": "integer",
+                    "constraints": "DEFAULT 3",
+                    "description": "Số lần retry khi API call thất bại"
+                },
+                {
+                    "name": "last_sync",
+                    "type": "timestamp",
+                    "description": "Thời điểm sync dữ liệu gần nhất với hệ thống bên ngoài"
+                },
+                {
+                    "name": "description",
+                    "type": "varchar",
+                    "length": 500,
+                    "description": "Mô tả mục đích và cách thức tích hợp"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm tạo cấu hình tích hợp"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời điểm cập nhật gần nhất"
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_integration_configs_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id"
+                },
+                {
+                    "name": "idx_integration_configs_integration_name",
+                    "columns": ["integration_name"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo integration_name là duy nhất"
+                }
+            ],
+            "foreign_keys": []
+        }
+    }
+}

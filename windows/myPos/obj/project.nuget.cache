@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "95iKptbzjfk=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\cuong\\DEV\\MOBILE-APP\\myPos\\windows\\myPos\\myPos.vcxproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\cuong\\.nuget\\packages\\boost\\1.83.0\\boost.1.83.0.nupkg.sha512",
+    "C:\\Users\\cuong\\.nuget\\packages\\microsoft.javascript.hermes\\0.0.0-2505.2001-0e4bc3b9\\microsoft.javascript.hermes.0.0.0-2505.2001-0e4bc3b9.nupkg.sha512",
+    "C:\\Users\\cuong\\.nuget\\packages\\microsoft.ui.xaml\\2.8.0\\microsoft.ui.xaml.2.8.0.nupkg.sha512",
+    "C:\\Users\\cuong\\.nuget\\packages\\microsoft.web.webview2\\1.0.1264.42\\microsoft.web.webview2.1.0.1264.42.nupkg.sha512",
+    "C:\\Users\\cuong\\.nuget\\packages\\microsoft.windows.cppwinrt\\2.0.230706.1\\microsoft.windows.cppwinrt.2.0.230706.1.nupkg.sha512"
+  ],
+  "logs": []
+}

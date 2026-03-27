@@ -1,0 +1,232 @@
+{
+    "version": "v1",
+    "database_name": "payment.db",
+    "description": "Xử lý các giao dịch thanh toán, tích hợp với các cổng thanh toán và quản lý cấu hình liên quan.",
+    "type_mapping": {
+        "sqlite": {
+            "string": "TEXT",
+            "varchar": "TEXT",
+            "char": "TEXT",
+            "email": "TEXT",
+            "url": "TEXT",
+            "uuid": "TEXT",
+            "integer": "INTEGER",
+            "bigint": "INTEGER",
+            "smallint": "INTEGER",
+            "tinyint": "INTEGER",
+            "decimal": "REAL",
+            "numeric": "REAL",
+            "float": "REAL",
+            "double": "REAL",
+            "boolean": "INTEGER",
+            "timestamp": "TEXT",
+            "datetime": "TEXT",
+            "date": "TEXT",
+            "time": "TEXT",
+            "json": "TEXT",
+            "array": "TEXT",
+            "blob": "BLOB",
+            "binary": "BLOB"
+        }
+    },
+    "schemas": {
+        "payment_transactions": {
+            "description": "Quản lý các giao dịch thanh toán qua cổng thanh toán.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "constraints": "PRIMARY KEY",
+                    "description": "Định danh duy nhất của giao dịch thanh toán."
+                },
+                {
+                    "name": "transaction_id",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL UNIQUE",
+                    "description": "Định danh giao dịch liên quan."
+                },
+                {
+                    "name": "order_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh đơn hàng liên quan đến giao dịch."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh cửa hàng xử lý giao dịch."
+                },
+                {
+                    "name": "payment_gateway",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "description": "Tên cổng thanh toán được sử dụng."
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal",
+                    "precision": 10,
+                    "scale": 2,
+                    "constraints": "NOT NULL",
+                    "description": "Số tiền giao dịch."
+                },
+                {
+                    "name": "currency",
+                    "type": "char",
+                    "length": 3,
+                    "constraints": "NOT NULL DEFAULT 'VND'",
+                    "description": "Loại tiền tệ của giao dịch."
+                },
+                {
+                    "name": "payment_method",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "enum": ["credit_card", "bank_transfer", "mobile_payment", "cash"],
+                    "description": "Phương thức thanh toán."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL DEFAULT 'pending'",
+                    "enum": ["pending", "completed", "failed", "refunded", "canceled"],
+                    "description": "Trạng thái của giao dịch thanh toán."
+                },
+                {
+                    "name": "gateway_transaction_id",
+                    "type": "varchar",
+                    "length": 100,
+                    "description": "Mã giao dịch từ cổng thanh toán."
+                },
+                {
+                    "name": "gateway_response",
+                    "type": "json",
+                    "description": "Phản hồi từ cổng thanh toán."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo giao dịch thanh toán."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_payment_transactions_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_payment_transactions_order_id",
+                    "columns": ["order_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo order_id."
+                },
+                {
+                    "name": "idx_payment_transactions_transaction_id",
+                    "columns": ["transaction_id"],
+                    "unique": true,
+                    "description": "Chỉ mục đảm bảo transaction_id là duy nhất."
+                }
+            ]
+        },
+        "payment_configs": {
+            "description": "Lưu trữ cấu hình cho các cổng thanh toán.",
+            "cols": [
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "constraints": "PRIMARY KEY AUTO_INCREMENT",
+                    "description": "Định danh duy nhất của cấu hình thanh toán."
+                },
+                {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "constraints": "NOT NULL",
+                    "description": "Định danh cửa hàng sử dụng cấu hình."
+                },
+                {
+                    "name": "payment_method",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "enum": ["credit_card", "bank_transfer", "mobile_payment", "cash"],
+                    "description": "Phương thức thanh toán được cấu hình."
+                },
+                {
+                    "name": "gateway_name",
+                    "type": "varchar",
+                    "length": 50,
+                    "constraints": "NOT NULL",
+                    "description": "Tên cổng thanh toán."
+                },
+                {
+                    "name": "partner_code",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Mã đối tác của cổng thanh toán."
+                },
+                {
+                    "name": "access_key",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Khóa truy cập của cổng thanh toán."
+                },
+                {
+                    "name": "secret_key",
+                    "type": "varchar",
+                    "length": 100,
+                    "constraints": "NOT NULL",
+                    "description": "Khóa bí mật của cổng thanh toán."
+                },
+                {
+                    "name": "endpoint_url",
+                    "type": "url",
+                    "constraints": "NOT NULL",
+                    "description": "URL điểm cuối của cổng thanh toán."
+                },
+                {
+                    "name": "is_sandbox",
+                    "type": "boolean",
+                    "constraints": "DEFAULT TRUE",
+                    "description": "Trạng thái môi trường thử nghiệm (1: sandbox, 0: production)."
+                },
+                {
+                    "name": "status",
+                    "type": "varchar",
+                    "length": 20,
+                    "constraints": "NOT NULL DEFAULT 'active'",
+                    "enum": ["active", "inactive"],
+                    "description": "Trạng thái của cấu hình thanh toán."
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "constraints": "DEFAULT CURRENT_TIMESTAMP",
+                    "description": "Thời gian tạo cấu hình thanh toán."
+                }
+            ],
+            "indexes": [
+                {
+                    "name": "idx_payment_configs_store_id",
+                    "columns": ["store_id"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo store_id."
+                },
+                {
+                    "name": "idx_payment_configs_gateway_name",
+                    "columns": ["gateway_name"],
+                    "unique": false,
+                    "description": "Chỉ mục để tìm kiếm nhanh theo gateway_name."
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,277 @@
+{
+  "version": "v1",
+  "database_name": "media.db",
+  "description": "Cơ sở dữ liệu quản lý hình ảnh và thư mục theo cấu trúc cây, hỗ trợ thumbnail và thiết kế multi-tenant.",
+  "type_mapping": {
+    "sqlite": {
+      "string": "TEXT",
+      "varchar": "TEXT",
+      "char": "TEXT",
+      "email": "TEXT",
+      "url": "TEXT",
+      "uuid": "TEXT",
+      "integer": "INTEGER",
+      "bigint": "INTEGER",
+      "smallint": "INTEGER",
+      "tinyint": "INTEGER",
+      "decimal": "REAL",
+      "numeric": "REAL",
+      "float": "REAL",
+      "double": "REAL",
+      "boolean": "INTEGER",
+      "timestamp": "TEXT",
+      "datetime": "TEXT",
+      "date": "TEXT",
+      "time": "TEXT",
+      "json": "TEXT",
+      "array": "TEXT",
+      "blob": "BLOB",
+      "binary": "BLOB"
+    }
+  },
+  "schemas": {
+    "folders": {
+      "description": "Bảng lưu trữ thông tin thư mục theo cấu trúc cây để tổ chức hình ảnh.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTOINCREMENT",
+          "length": null,
+          "enum": [],
+          "description": "Khóa chính của thư mục."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "constraints": "NOT NULL",
+          "length": 255,
+          "enum": [],
+          "description": "Tên thư mục."
+        },
+        {
+          "name": "parent_id",
+          "type": "integer",
+          "constraints": null,
+          "length": null,
+          "enum": [],
+          "description": "Khóa thư mục cha để tạo cấu trúc cây."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "length": null,
+          "enum": [],
+          "description": "Thời gian tạo thư mục."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "length": null,
+          "enum": [],
+          "description": "Thời gian cập nhật thư mục."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_folders_store_id",
+          "columns": ["store_id"]
+        },
+        {
+          "name": "idx_folders_parent_id",
+          "columns": ["parent_id"]
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_folder_parent_id",
+          "column": "parent_id",
+          "references": {
+            "table": "folders",
+            "column": "id"
+          },
+          "on_delete": "SET NULL",
+          "on_update": "CASCADE"
+        }
+      ]
+    },
+    "images": {
+      "description": "Bảng lưu trữ metadata của hình ảnh, bao gồm đường dẫn lưu trữ local.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTOINCREMENT",
+          "length": null,
+          "enum": [],
+          "description": "Khóa chính của hình ảnh."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "folder_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "length": null,
+          "enum": [],
+          "description": "Khóa thư mục chứa hình ảnh."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "constraints": "NOT NULL",
+          "length": 255,
+          "enum": [],
+          "description": "Tên hình ảnh."
+        },
+        {
+          "name": "path",
+          "type": "string",
+          "constraints": "NOT NULL",
+          "length": 512,
+          "enum": [],
+          "description": "Đường dẫn lưu trữ local của hình ảnh gốc."
+        },
+        {
+          "name": "size",
+          "type": "integer",
+          "constraints": null,
+          "length": null,
+          "enum": [],
+          "description": "Kích thước file hình ảnh (byte)."
+        },
+        {
+          "name": "mime_type",
+          "type": "string",
+          "constraints": null,
+          "length": 50,
+          "enum": [],
+          "description": "Loại MIME của hình ảnh."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "length": null,
+          "enum": [],
+          "description": "Thời gian tải lên hình ảnh."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "length": null,
+          "enum": [],
+          "description": "Thời gian cập nhật hình ảnh."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_images_store_id",
+          "columns": ["store_id"]
+        },
+        {
+          "name": "idx_images_folder_id",
+          "columns": ["folder_id"]
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_image_folder_id",
+          "column": "folder_id",
+          "references": {
+            "table": "folders",
+            "column": "id"
+          },
+          "on_delete": "SET NULL",
+          "on_update": "CASCADE"
+        }
+      ]
+    },
+    "thumbnails": {
+      "description": "Bảng quản lý thumbnail của các hình ảnh, lưu trữ nhiều kích thước thumbnail cho mỗi ảnh.",
+      "cols": [
+        {
+          "name": "id",
+          "type": "integer",
+          "constraints": "PRIMARY KEY AUTOINCREMENT",
+          "length": null,
+          "enum": [],
+          "description": "Khóa chính của thumbnail."
+        },
+        {
+          "name": "store_id",
+          "type": "uuid",
+          "constraints": "NOT NULL",
+          "description": "Mã định danh của cửa hàng, dùng để liên kết với dữ liệu cửa hàng."
+        },
+        {
+          "name": "image_id",
+          "type": "integer",
+          "constraints": "NOT NULL",
+          "length": null,
+          "enum": [],
+          "description": "Khóa hình ảnh gốc liên kết với thumbnail."
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "constraints": "NOT NULL",
+          "length": 50,
+          "enum": ["small", "medium", "large"],
+          "description": "Kích thước thumbnail (ví dụ: small, medium, large)."
+        },
+        {
+          "name": "path",
+          "type": "string",
+          "constraints": "NOT NULL",
+          "length": 512,
+          "enum": [],
+          "description": "Đường dẫn lưu trữ local của thumbnail."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "constraints": "DEFAULT CURRENT_TIMESTAMP",
+          "length": null,
+          "enum": [],
+          "description": "Thời gian tạo thumbnail."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_thumbnails_store_id",
+          "columns": ["store_id"]
+        },
+        {
+          "name": "idx_thumbnails_image_id",
+          "columns": ["image_id"]
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "fk_images_image_id",
+          "column": "image_id",
+          "references": {
+            "table": "images",
+            "column": "id"
+          },
+          "on_delete": "SET NULL",
+          "on_update": "CASCADE"
+        }
+      ]
+    }
+  }
+}

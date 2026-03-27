@@ -1,0 +1,32 @@
+export default {
+  settings: {
+    title: 'Cài đặt',
+    industryTitle: 'Lĩnh vực hoạt động',
+    selectIndustries: 'Chọn Ngành nghề',
+    selected: 'Đã chọn',
+    none: 'Không có',
+    industries: {
+      retail: 'Bán lẻ',
+      fnb: 'Ẩm thực & Đồ uống',
+      spa: 'Spa',
+      pharmacy: 'Dược phẩm',
+      general: 'Tổng quát',
+      chain: 'Chuỗi',
+      others: 'Các ngành khác',
+    },
+    roleTitle: 'Vai trò',
+    selectRoles: 'Chọn Vai trò',
+    roles: {
+      trial: 'Khách dùng thử',
+      individual: 'Cá nhân độc lập',
+      employee: 'Nhân viên',
+      manager: 'Quản lý',
+      owner: 'Chủ doanh nghiệp',
+      accountant: 'Kế toán',
+    },
+    languageTitle: 'Ngôn ngữ',
+    themeTitle: 'Màn tình tối ?',
+    savedSuccessfully: 'Lưu cài đặt thành công',
+    saveError: 'Có lỗi lưu cài đặt',
+  },
+};
