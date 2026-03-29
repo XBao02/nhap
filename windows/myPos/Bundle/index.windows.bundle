@@ -1,9 +1,0 @@
-/**
- * 
- * Be sure to generate this file using the CLI:
- *
- * npx @react-native-community/cli bundle --platform windows --entry-file index.js 
- *   --bundle-output windows\myPos\Bundle\index.windows.bundle
- *   --assets-dest windows\myPos\Bundle
- *
- */
